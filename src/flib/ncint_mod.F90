@@ -31,6 +31,7 @@ module ncint_mod
 
   public :: nf_def_iosystem, nf_free_iosystem, nf_def_decomp, nf_free_decomp, &
        nf_put_vard_int
+  integer, public, parameter :: NF_PIO = 64 /* PIO ID for NetCDF Integration */
 
 contains
 

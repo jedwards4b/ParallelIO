@@ -1589,11 +1589,12 @@ PIOc_init_async(MPI_Comm world, int num_io_procs, int *io_proc_list,
     int my_io_proc_list[num_io_procs]; /* List of processors in IO component. */
     int mpierr;           /* Return code from MPI functions. */
     int ret;              /* Return code. */
-//    int world_size;
 
     /* Check input parameters. Only allow box rearranger for now. */
-    if (num_io_procs < 1 || component_count < 1 || !num_procs_per_comp || !iosysidp ||
-        (rearranger != PIO_REARR_BOX))
+    if (num_io_procs < 1 || component_count < 1 || !num_procs_per_comp || !iosysidp)
+        return pio_err(NULL, NULL, PIO_EINVAL, __FILE__, __LINE__);
+
+    if (rearranger < PIO_REARR_BOX || rearranger > PIO_REARR_SUBSET)
         return pio_err(NULL, NULL, PIO_EINVAL, __FILE__, __LINE__);
 
     my_proc_list = (int**) malloc(component_count * sizeof(int*));
@@ -1685,7 +1686,7 @@ PIOc_init_async(MPI_Comm world, int num_io_procs, int *io_proc_list,
         if ((ret = MPI_Comm_rank(io_comm, &io_rank)))
             return check_mpi(NULL, NULL, ret, __FILE__, __LINE__);
         iomaster = !io_rank ? MPI_ROOT : MPI_PROC_NULL;
-        PLOG((3, "intracomm created for io_comm = %d io_rank = %d IO %s",
+        PLOG((3, "intercomm created for io_comm = %d io_rank = %d IO %s",
               io_comm, io_rank, iomaster == MPI_ROOT ? "MASTER" : "SERVANT"));
     }
 
@@ -2050,9 +2051,8 @@ PIOc_init_async_from_comms(MPI_Comm world, int component_count, MPI_Comm *comp_c
     pio_start_mpe_log(INIT);
 #endif /* USE_MPE */
 
-    /* Check input parameters. Only allow box rearranger for now. */
-    if (component_count < 1 || !comp_comm || !iosysidp ||
-        (rearranger != PIO_REARR_BOX))
+    /* Check input parameters. */
+    if (component_count < 1 || !comp_comm || !iosysidp)
         return pio_err(NULL, NULL, PIO_EINVAL, __FILE__, __LINE__);
 
     /* Turn on the logging system for PIO. */

@@ -65,10 +65,9 @@ int main(int argc, char **argv)
         if ((ret = get_iotypes(&num_iotypes, iotype)))
             ERR(ret);
 
-        /* This should fail. */
-        if (PIOc_init_async(test_comm, NUM_IO_PROCS, io_proc_list, COMPONENT_COUNT,
-                            num_procs, (int **)proc_list, NULL, NULL, PIO_REARR_SUBSET, iosysid) != PIO_EINVAL)
-            ERR(ERR_WRONG);
+//        if (PIOc_init_async(test_comm, NUM_IO_PROCS, io_proc_list, COMPONENT_COUNT,
+//                            num_procs, (int **)proc_list, NULL, NULL, PIO_REARR_SUBSET, iosysid))
+//            ERR(ERR_INIT);
 
         /* Initialize the IO system. The IO task will not return from
          * this call, but instead will go into a loop, listening for

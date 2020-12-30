@@ -1090,8 +1090,15 @@ rearrange_io2comp(iosystem_desc_t *ios, io_desc_t *iodesc, void *sbuf,
         }
     }
 
+    if(ios->async && iodesc->rearranger == PIO_REARR_SUBSET)
+    {
+        if(ios->ioproc && iodesc->stype == NULL)
+            iodesc->stype = malloc(sizeof(int));
+        mpierr = MPI_Bcast(iodesc->stype, 1, MPI_INT, 1, iodesc->subset_comm);
+    }
+
     /* In the box rearranger each comp task may communicate with
-     * multiple IO tasks here we are setting the count and data type
+     * multiple IO tasks.  Here we are setting the count and data type
      * of the communication of a given compute task with each io
      * task. */
     for (int i = 0; i < niotasks; i++)
@@ -1103,8 +1110,16 @@ rearrange_io2comp(iosystem_desc_t *ios, io_desc_t *iodesc, void *sbuf,
 
         if (iodesc->scount[i] > 0 && iodesc->stype[i] != PIO_DATATYPE_NULL)
         {
-            recvcounts[io_comprank] = 1;
-            recvtypes[io_comprank] = iodesc->stype[i];
+            if(ios->async)
+            {
+                recvcounts[io_comprank] = 0;
+                recvtypes[io_comprank] = PIO_DATATYPE_NULL;
+            }
+            else
+            {
+                recvcounts[io_comprank] = 1;
+                recvtypes[io_comprank] = iodesc->stype[i];
+            }
         }
     }
 
@@ -1962,7 +1977,7 @@ default_subset_partition(iosystem_desc_t *ios, io_desc_t *iodesc)
     PLOG((3, "key = %d color = %d", key, color));
 
     /* Create new communicators. */
-    if ((mpierr = MPI_Comm_split(ios->comp_comm, color, key, &iodesc->subset_comm)))
+    if ((mpierr = MPI_Comm_split(ios->union_comm, color, key, &iodesc->subset_comm)))
         return check_mpi(NULL, NULL, mpierr, __FILE__, __LINE__);
 
     return PIO_NOERR;
@@ -2032,6 +2047,7 @@ subset_rearrange_create(iosystem_desc_t *ios, int maplen, PIO_Offset *compmap,
     int rcnt = 0;
     int mpierr; /* Return call from MPI function calls. */
     int ret;
+    char msg[80];
 
     /* Check inputs. */
     pioassert(ios && maplen >= 0 && compmap && gdimlen && ndims >= 0 && iodesc,
@@ -2052,13 +2068,24 @@ subset_rearrange_create(iosystem_desc_t *ios, int maplen, PIO_Offset *compmap,
     if ((mpierr = MPI_Comm_size(iodesc->subset_comm, &ntasks)))
         return check_mpi(ios, NULL, mpierr, __FILE__, __LINE__);
 
+    /* but exclude IO tasks in async mode */
+    if(ios->async)
+        ntasks = ntasks-1;
+
+    PLOG((2, "subset_rearrange_create rank = %d ntasks = %d", rank, ntasks));
+
     /* Check rank for correctness. */
     if (ios->ioproc)
-        pioassert(rank == 0, "Bad io rank in subset create", __FILE__, __LINE__);
+    {
+        sprintf(msg,"Bad io rank in subset create, rank=%d", rank);
+        pioassert(rank == 0, msg, __FILE__, __LINE__);
+    }
     else
-        pioassert(rank > 0 && rank < ntasks, "Bad comp rank in subset create",
+    {
+        sprintf(msg,"Bad comp rank in subset create, rank=%d, ntasks=%d", rank, ntasks);
+        pioassert(rank > 0 && rank < ntasks + ios->async, msg,
                   __FILE__, __LINE__);
-
+    }
     /* Remember the maplen for this computation task. */
     iodesc->ndof = maplen;
 
@@ -2415,7 +2442,6 @@ subset_rearrange_create(iosystem_desc_t *ios, int maplen, PIO_Offset *compmap,
         /* Compute the max io buffer size needed for an iodesc. */
         if ((ret = compute_maxIObuffersize(ios->io_comm, iodesc)))
             return pio_err(ios, NULL, ret, __FILE__, __LINE__);
-
         iodesc->nrecvs = ntasks;
     }
 
