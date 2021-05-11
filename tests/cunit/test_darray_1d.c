@@ -147,12 +147,16 @@ int test_darray_fill(int iosysid, int ioid, int pio_type, int num_flavors, int *
         if (flavor[fmt] == PIO_IOTYPE_PNETCDF && (pio_type == PIO_BYTE || pio_type == PIO_CHAR))
             continue;
 
+        if(flavor[fmt] != PIO_IOTYPE_PNETCDF)
+            continue;
+
+
         /* NetCDF-4 types only work with netCDF-4 formats. */
         if (pio_type > PIO_DOUBLE && flavor[fmt] != PIO_IOTYPE_NETCDF4C &&
             flavor[fmt] != PIO_IOTYPE_NETCDF4P)
             continue;
 
-        for (int with_fillvalue = 0; with_fillvalue < NUM_FILLVALUE_PRESENT_TESTS; with_fillvalue++)
+        for (int with_fillvalue = 1; with_fillvalue < NUM_FILLVALUE_PRESENT_TESTS; with_fillvalue++)
         {
             /* Create the filename. */
             sprintf(filename, "data_%s_iotype_%d_pio_type_%d_with_fillvalue_%d.nc", TEST_NAME, flavor[fmt],
@@ -790,15 +794,15 @@ int test_decomp_read_write(int iosysid, int ioid, int num_flavors, int *flavor, 
 /* Run tests for darray functions. */
 int main(int argc, char **argv)
 {
-#define NUM_REARRANGERS_TO_TEST 2
+#define NUM_REARRANGERS_TO_TEST 1
     int rearranger[NUM_REARRANGERS_TO_TEST] = {PIO_REARR_BOX, PIO_REARR_SUBSET};
 #ifdef _NETCDF4
 #define NUM_TYPES_TO_TEST 11
     int test_type[NUM_TYPES_TO_TEST] = {PIO_BYTE, PIO_CHAR, PIO_SHORT, PIO_INT, PIO_FLOAT, PIO_DOUBLE,
                                         PIO_UBYTE, PIO_USHORT, PIO_UINT, PIO_INT64, PIO_UINT64};
 #else
-#define NUM_TYPES_TO_TEST 6
-    int test_type[NUM_TYPES_TO_TEST] = {PIO_BYTE, PIO_CHAR, PIO_SHORT, PIO_INT, PIO_FLOAT, PIO_DOUBLE};
+#define NUM_TYPES_TO_TEST 1
+    int test_type[NUM_TYPES_TO_TEST] = {PIO_INT};
 #endif /* _NETCDF4 */
     int my_rank;
     int ntasks;
@@ -845,9 +849,9 @@ int main(int argc, char **argv)
                     return ret;
 
                 /* Test decomposition read/write. */
-                if ((ret = test_decomp_read_write(iosysid, ioid, num_flavors, flavor, my_rank,
-                                                  test_type[t], rearranger[r], test_comm)))
-                    return ret;
+//                if ((ret = test_decomp_read_write(iosysid, ioid, num_flavors, flavor, my_rank,
+//                                                  test_type[t], rearranger[r], test_comm)))
+//                    return ret;
 
                 /* Run tests. */
                 if ((ret = test_darray_fill(iosysid, ioid, test_type[t], num_flavors, flavor,
