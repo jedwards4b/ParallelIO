@@ -57,7 +57,7 @@
 #define MPI_OFFSET OMPI_OFFSET_DATATYPE
 #endif
 #endif
-#ifndef MPI_Offset
+#ifndef PIO_Offset
 /** This is the type used for PIO_Offset. */
 #define MPI_Offset long long
 #endif
