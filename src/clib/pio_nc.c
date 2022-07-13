@@ -1201,6 +1201,7 @@ PIOc_inq_att_eh(int ncid, int varid, const char *name, int eh,
     int mpierr = MPI_SUCCESS, mpierr2;  /* Return code from MPI function codes. */
     int ierr;
 
+    ierr = PIO_NOERR;
     /* Find file based on ncid. */
     if ((ierr = pio_get_file(ncid, &file)))
         return pio_err(NULL, NULL, ierr, __FILE__, __LINE__);
@@ -1257,6 +1258,8 @@ PIOc_inq_att_eh(int ncid, int varid, const char *name, int eh,
 
         if (file->iotype != PIO_IOTYPE_PNETCDF && file->do_io)
             ierr = nc_inq_att(file->fh, varid, name, xtypep, (size_t *)lenp);
+        if(lenp)
+            printf("on io task fh=%d varid=%d name=%s lenp=%ld ierr=%d\n", file->fh, varid, name, *lenp, ierr);
     }
 
     /* Broadcast and check the return code. */

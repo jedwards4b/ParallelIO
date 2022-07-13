@@ -523,6 +523,8 @@ PIOc_InitDecomp(int iosysid, int pio_type, int ndims, const int *gdimlen, int ma
     if (!(ios = pio_get_iosystem_from_id(iosysid)))
         return pio_err(NULL, NULL, PIO_EBADID, __FILE__, __LINE__);
 
+    PLOG((2,"iosysid=%d, ios->async=%d, ios->io_rank=%d, ios->ioproc=%d, ios->compproc=%d",iosysid, ios->async, ios->io_rank, ios->ioproc, ios->compproc));
+
     /* Caller must provide these. */
     if (!gdimlen || !compmap || !ioidp)
         return pio_err(ios, NULL, PIO_EINVAL, __FILE__, __LINE__);

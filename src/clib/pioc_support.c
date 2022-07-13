@@ -2663,9 +2663,9 @@ PIOc_openfile_retry(int iosysid, int *ncidp, int *iotype, const char *filename,
     {
         int msg = PIO_MSG_OPEN_FILE;
         size_t len = strlen(filename);
-
         if (!ios->ioproc)
         {
+            PLOG((2, "Preparing for file open in async, filename=%s", filename));
             /* Send the message to the message handler. */
             if (ios->compmaster == MPI_ROOT)
                 mpierr = MPI_Send(&msg, 1, MPI_INT, ios->ioroot, 1, ios->union_comm);

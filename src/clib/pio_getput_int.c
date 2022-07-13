@@ -265,6 +265,7 @@ PIOc_get_att_tc(int ncid, int varid, const char *name, nc_type memtype, void *ip
     if (!ios->async || !ios->ioproc)
     {
         /* Get the type and length of the attribute. */
+        PLOG((2, "name=%s varid=%d", name, varid));
         if ((ierr = PIOc_inq_att(ncid, varid, name, &atttype, &attlen)))
         {
             if (ios->async)
@@ -272,7 +273,7 @@ PIOc_get_att_tc(int ncid, int varid, const char *name, nc_type memtype, void *ip
             else
                 return check_netcdf(file, ierr, __FILE__, __LINE__);
         }
-        PLOG((2, "atttype = %d attlen = %d", atttype, attlen));
+        PLOG((2, "atttype = %d attlen = %d name=%s", atttype, attlen, name));
 
         /* Get the length (in bytes) of the type of the attribute. */
         if ((ierr = PIOc_inq_type(ncid, atttype, NULL, &atttype_len)))
@@ -446,6 +447,7 @@ PIOc_get_att_tc(int ncid, int varid, const char *name, nc_type memtype, void *ip
 
     /* Broadcast results to all tasks. */
     PLOG((2, "bcasting att values attlen = %d memtype_len = %d", attlen, memtype_len));
+
     if ((mpierr = MPI_Bcast(ip, (int)attlen * memtype_len, MPI_BYTE, ios->ioroot,
                             ios->my_comm)))
         return check_mpi(NULL, file, mpierr, __FILE__, __LINE__);
