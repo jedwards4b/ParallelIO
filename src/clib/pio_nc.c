@@ -1125,6 +1125,7 @@ PIOc_inq_varid(int ncid, const char *name, int *varidp)
         {
             int msg = PIO_MSG_INQ_VARID;
 
+            PLOG((1, "PIOc_inq_varid sending msg = %d", msg));
             if (ios->compmaster == MPI_ROOT)
                 mpierr = MPI_Send(&msg, 1,MPI_INT, ios->ioroot, 1, ios->union_comm);
 
@@ -1155,6 +1156,8 @@ PIOc_inq_varid(int ncid, const char *name, int *varidp)
 
         if (file->iotype != PIO_IOTYPE_PNETCDF && file->do_io)
             ierr = nc_inq_varid(file->fh, name, varidp);
+
+        PLOG((1, "PIOc_inq_varid ncid = %d name = %s varid = %d", ncid, name, *varidp));
     }
 
     /* Broadcast and check the return code. */
@@ -1164,10 +1167,11 @@ PIOc_inq_varid(int ncid, const char *name, int *varidp)
         return check_netcdf(file, ierr, __FILE__, __LINE__);
 
     /* Broadcast results to all tasks. Ignore NULL parameters. */
-    if (varidp)
+    if (varidp){
         if ((mpierr = MPI_Bcast(varidp, 1, MPI_INT, ios->ioroot, ios->my_comm)))
             check_mpi(NULL, file, mpierr, __FILE__, __LINE__);
 
+    }
     return PIO_NOERR;
 }
 
@@ -1221,6 +1225,7 @@ PIOc_inq_att_eh(int ncid, int varid, const char *name, int eh,
             char xtype_present = xtypep ? true : false;
             char len_present = lenp ? true : false;
             int namelen = strlen(name);
+            PLOG((2, "sending parameters %d",msg));
 
             if (ios->compmaster == MPI_ROOT)
                 mpierr = MPI_Send(&msg, 1,MPI_INT, ios->ioroot, 1, ios->union_comm);
@@ -1258,8 +1263,6 @@ PIOc_inq_att_eh(int ncid, int varid, const char *name, int eh,
 
         if (file->iotype != PIO_IOTYPE_PNETCDF && file->do_io)
             ierr = nc_inq_att(file->fh, varid, name, xtypep, (size_t *)lenp);
-        if(lenp)
-            printf("on io task fh=%d varid=%d name=%s lenp=%ld ierr=%d\n", file->fh, varid, name, *lenp, ierr);
     }
 
     /* Broadcast and check the return code. */

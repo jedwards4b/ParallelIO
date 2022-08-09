@@ -298,7 +298,7 @@ PIOc_get_att_tc(int ncid, int varid, const char *name, nc_type memtype, void *ip
         if (!ios->ioproc)
         {
             int msg = PIO_MSG_GET_ATT;
-            PLOG((2, "sending parameters"));
+            PLOG((2, "sending parameters %d",msg));
 
             /* Send the message to IO master. */
             if (ios->compmaster == MPI_ROOT)
@@ -310,6 +310,7 @@ PIOc_get_att_tc(int ncid, int varid, const char *name, nc_type memtype, void *ip
             if (!mpierr)
                 mpierr = MPI_Bcast(&varid, 1, MPI_INT, ios->compmaster, ios->intercomm);
             int namelen = strlen(name);
+            PLOG((2, "sending parameters - namelen=%d",namelen));
             if (!mpierr)
                 mpierr = MPI_Bcast(&namelen, 1, MPI_INT,  ios->compmaster, ios->intercomm);
             if (!mpierr)
@@ -318,6 +319,7 @@ PIOc_get_att_tc(int ncid, int varid, const char *name, nc_type memtype, void *ip
                 mpierr = MPI_Bcast(&file->iotype, 1, MPI_INT, ios->compmaster, ios->intercomm);
             if (!mpierr)
                 mpierr = MPI_Bcast(&atttype, 1, MPI_INT, ios->compmaster, ios->intercomm);
+            PLOG((2, "sending parameters - attlen=%d",attlen));
             if (!mpierr)
                 mpierr = MPI_Bcast(&attlen, 1, MPI_OFFSET, ios->compmaster, ios->intercomm);
             if (!mpierr)

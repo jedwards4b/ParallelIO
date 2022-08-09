@@ -3243,7 +3243,14 @@ determine_procs(int num_io_procs, int component_count, int *num_procs_per_comp,
             if (!(my_proc_list[cmp] = malloc(num_procs_per_comp[cmp] * sizeof(int))))
                 return pio_err(NULL, NULL, PIO_ENOMEM, __FILE__, __LINE__);
             memcpy(my_proc_list[cmp], proc_list[cmp], num_procs_per_comp[cmp] * sizeof(int));
+            int proc;
+            for (proc = my_proc_list[cmp][0]; proc < num_procs_per_comp[cmp]; proc++)
+                {
+                    PLOG((3, "my_proc_list[%d][%d] = %d", cmp, proc, my_proc_list[cmp][proc]));
+                }
         }
+
+
     }
     return PIO_NOERR;
 }

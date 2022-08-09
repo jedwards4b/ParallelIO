@@ -1046,7 +1046,7 @@ contains
 
     interface
        integer(C_INT) function PIOc_init_async_from_F90(f90_comm_world, num_io_procs, io_proc_list, component_count, &
-            procs_per_component, flat_proc_list, io_comm, comp_comm, rearranger, iosysid) &
+            procs_per_component, proc_list_size, flat_proc_list, io_comm, comp_comm, rearranger, iosysid) &
             bind(C,name="PIOc_init_async_from_F90")
          use iso_c_binding
          use pio_types
@@ -1055,6 +1055,7 @@ contains
          integer(C_INT), intent(in)        :: io_proc_list(*)
          integer(C_INT), intent(in), value :: component_count
          integer(C_INT), intent(in)        :: procs_per_component(*)
+         integer(C_INT), intent(in), value :: proc_list_size
          integer(C_INT), intent(in)        :: flat_proc_list(*)
          integer(C_INT), intent(out)       :: io_comm
          integer(C_INT), intent(out)       :: comp_comm(*)
@@ -1074,12 +1075,14 @@ contains
     integer :: numcomps
     integer :: i
     integer :: ierr
+    integer :: proc_list_size
     integer, allocatable :: iosysid(:)
 
     numcomps = size(iosystem)
     allocate(iosysid(numcomps))
+    proc_list_size = size(comp_proc_list)
     ierr = PIOc_init_async_from_F90(incomm, size(io_proc_list), io_proc_list, size(procs_per_component), &
-         procs_per_component, reshape(comp_proc_list,(/size(comp_proc_list)/)), io_comm, &
+         procs_per_component, proc_list_size, reshape(comp_proc_list,(/proc_list_size/)), io_comm, &
          comp_comm, rearranger, iosysid)
     do i=1,numcomps
        iosystem(i)%iosysid = iosysid(i)

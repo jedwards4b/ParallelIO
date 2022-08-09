@@ -116,12 +116,11 @@ PIOc_init_async(MPI_Comm world, int num_io_procs, int *io_proc_list,
                 MPI_Comm *user_io_comm, MPI_Comm *user_comp_comm, int rearranger,
                 int *iosysidp)
 {
-    int my_rank;          /* Rank of this task. */
+    int my_rank;          /* Rank of this task in comm world. */
     int **my_proc_list;   /* Array of arrays of procs for comp components. */
     int my_io_proc_list[num_io_procs]; /* List of processors in IO component. */
     int mpierr;           /* Return code from MPI functions. */
     int ret;              /* Return code. */
-//    int world_size;
 
     /* Check input parameters. Only allow box rearranger for now. */
     if (num_io_procs < 1 || component_count < 1 || !num_procs_per_comp || !iosysidp ||
@@ -154,10 +153,6 @@ PIOc_init_async(MPI_Comm world, int num_io_procs, int *io_proc_list,
     /* Get rank of this task in world. */
     if ((ret = MPI_Comm_rank(world, &my_rank)))
         return check_mpi(NULL, NULL, ret, __FILE__, __LINE__);
-
-    /* Get size of world. */
-//    if ((ret = MPI_Comm_size(world, &world_size)))
-//        return check_mpi(NULL, NULL, ret, __FILE__, __LINE__);
 
     PLOG((1, "%d: num_io_procs = %d", my_rank, num_io_procs));
 
@@ -195,7 +190,8 @@ PIOc_init_async(MPI_Comm world, int num_io_procs, int *io_proc_list,
      * processes. */
     int iomaster;
 
-    /* Create a group for the IO component. */
+
+    PLOG((1, "Create a group for the IO component."));
     if ((ret = MPI_Group_incl(world_group, num_io_procs, my_io_proc_list, &io_group)))
         return check_mpi(NULL, NULL, ret, __FILE__, __LINE__);
     PLOG((1, "created IO group - io_group = %d MPI_GROUP_EMPTY = %d", io_group, MPI_GROUP_EMPTY));
@@ -265,7 +261,9 @@ PIOc_init_async(MPI_Comm world, int num_io_procs, int *io_proc_list,
         /* We are not providing an info object. */
         my_iosys->info = MPI_INFO_NULL;
 
-        /* Create a group for this component. */
+        PLOG((1, "Create a group for component %d, num_procs=%d", cmp,num_procs_per_comp[cmp]));
+        for(int i=0; i< num_procs_per_comp[cmp]; i++)
+            PLOG((1, "include proc : %d", my_proc_list[cmp][i]));
         if ((ret = MPI_Group_incl(world_group, num_procs_per_comp[cmp], my_proc_list[cmp],
                                   &group[cmp])))
             return check_mpi(NULL, NULL, ret, __FILE__, __LINE__);
@@ -290,38 +288,14 @@ PIOc_init_async(MPI_Comm world, int num_io_procs, int *io_proc_list,
         for (int p = 0; p < num_procs_per_comp[cmp]; p++)
             proc_list_union[p + num_io_procs] = my_proc_list[cmp][p];
 
-//        qsort(proc_list_union, num_procs_per_comp[cmp] + num_io_procs, sizeof(int), compare_ints);
         for (int p = 0; p < num_procs_per_comp[cmp] + num_io_procs; p++)
             PLOG((3, "p %d num_io_procs %d proc_list_union[p + num_io_procs] %d ",
                   p, num_io_procs, proc_list_union[p]));
 
         /* The rank of the computation leader in the union comm. First task which is not an io task */
         my_iosys->ioroot = 0;
-/*
-        my_iosys->comproot = -1;
-        my_iosys->ioroot = -1;
-        for (int p = 0; p < num_procs_per_comp[cmp] + num_io_procs; p++)
-        {
-            bool ioproc = false;
-            for (int q = 0; q < num_io_procs; q++)
-            {
-                if (proc_list_union[p] == my_io_proc_list[q])
-                {
-                    ioproc = true;
-                    my_iosys->ioroot = proc_list_union[p];
-                    break;
-                }
-            }
-            if ( !ioproc && my_iosys->comproot < 0)
-            {
-                my_iosys->comproot = proc_list_union[p];
-            }
-        }
-*/
 
         PLOG((3, "my_iosys->comproot = %d ioroot = %d", my_iosys->comproot, my_iosys->ioroot));
-
-
 
         /* Allocate space for computation task ranks. */
         if (!(my_iosys->compranks = calloc(my_iosys->num_comptasks, sizeof(int))))
@@ -348,7 +322,7 @@ PIOc_init_async(MPI_Comm world, int num_io_procs, int *io_proc_list,
         PLOG((3, "pidx = %d num_procs_per_comp[%d] = %d in_cmp = %d",
               pidx, cmp, num_procs_per_comp[cmp], in_cmp));
 
-        /* Create the union group. */
+        PLOG((1, "Create the union group for component %d.",cmp));
         if ((ret = MPI_Group_incl(world_group, nprocs_union, proc_list_union, &union_group[cmp])))
             return check_mpi(NULL, NULL, ret, __FILE__, __LINE__);
         PLOG((3, "created union MPI_group - union_group[%d] = %d with %d procs", cmp,
@@ -709,26 +683,26 @@ PIOc_init_async_from_comms(MPI_Comm world, int component_count, MPI_Comm *comp_c
  */
 int
 PIOc_init_async_from_F90(int f90_world_comm,
-                             int num_io_procs,
-                             int *io_proc_list,
-                             int component_count,
-                             int *procs_per_component,
-                             int *flat_proc_list,
-                             int *f90_io_comm,
-                             int *f90_comp_comm,
-                             int rearranger,
-                             int *iosysidp)
-
+                         int num_io_procs,
+                         int *io_proc_list,
+                         int component_count,
+                         int *procs_per_component,
+                         int flat_proc_list_size,
+                         int *flat_proc_list,
+                         int *f90_io_comm,
+                         int *f90_comp_comm,
+                         int rearranger,
+                         int *iosysidp)
+    
 {
     int ret = PIO_NOERR;
     MPI_Comm io_comm, comp_comm;
     int maxprocs_per_component=0;
+    
+    maxprocs_per_component = flat_proc_list_size/component_count;
 
-   for(int i=0; i< component_count; i++)
-        maxprocs_per_component = (procs_per_component[i] > maxprocs_per_component) ? procs_per_component[i] : maxprocs_per_component;
 
     int **proc_list = (int **) malloc(sizeof(int *) *component_count);
-
     for(int i=0; i< component_count; i++){
         proc_list[i] = (int *) malloc(sizeof(int) * maxprocs_per_component);
         for(int j=0;j<procs_per_component[i]; j++)
