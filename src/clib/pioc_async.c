@@ -1,8 +1,8 @@
 /**
  * @file
- * Some initialization and support functions.
+ * Some initialization and support functions for async operations.
  * @author Jim Edwards
- * @date  2014
+ * @date  2022
  *
  * @see https://github.com/NCAR/ParallelIO
  */
@@ -30,6 +30,13 @@ extern int diosysid;
 #endif /* NETCDF_INTEGRATION */
 
 extern int default_error_handler; /* defined in pioc.c */
+
+/**
+ * @defgroup PIO_init_async Initialize an ASYNC IO System
+ * Initialize the IOSystem, including specifying number of IO and
+ * computation tasks in C.
+ *
+ */
 
 /**
  * Library initialization used when IO tasks are distinct from compute
@@ -107,8 +114,8 @@ extern int default_error_handler; /* defined in pioc.c */
  * gets the iosysid for each component.
  *
  * @return PIO_NOERR on success, error code otherwise.
- * @ingroup PIO_init_c
- * @author Ed Hartnett
+ * @ingroup PIO_init_async
+ * @author Ed Hartnett, Jim Edwards
  */
 int
 PIOc_init_async(MPI_Comm world, int num_io_procs, int *io_proc_list,
@@ -190,8 +197,8 @@ PIOc_init_async(MPI_Comm world, int num_io_procs, int *io_proc_list,
      * processes. */
     int iomaster;
 
-
     PLOG((1, "Create a group for the IO component."));
+
     if ((ret = MPI_Group_incl(world_group, num_io_procs, my_io_proc_list, &io_group)))
         return check_mpi(NULL, NULL, ret, __FILE__, __LINE__);
     PLOG((1, "created IO group - io_group = %d MPI_GROUP_EMPTY = %d", io_group, MPI_GROUP_EMPTY));
@@ -264,6 +271,7 @@ PIOc_init_async(MPI_Comm world, int num_io_procs, int *io_proc_list,
         PLOG((1, "Create a group for component %d, num_procs=%d", cmp,num_procs_per_comp[cmp]));
         for(int i=0; i< num_procs_per_comp[cmp]; i++)
             PLOG((1, "include proc : %d", my_proc_list[cmp][i]));
+
         if ((ret = MPI_Group_incl(world_group, num_procs_per_comp[cmp], my_proc_list[cmp],
                                   &group[cmp])))
             return check_mpi(NULL, NULL, ret, __FILE__, __LINE__);
@@ -323,6 +331,7 @@ PIOc_init_async(MPI_Comm world, int num_io_procs, int *io_proc_list,
               pidx, cmp, num_procs_per_comp[cmp], in_cmp));
 
         PLOG((1, "Create the union group for component %d.",cmp));
+
         if ((ret = MPI_Group_incl(world_group, nprocs_union, proc_list_union, &union_group[cmp])))
             return check_mpi(NULL, NULL, ret, __FILE__, __LINE__);
         PLOG((3, "created union MPI_group - union_group[%d] = %d with %d procs", cmp,
@@ -544,8 +553,8 @@ PIOc_init_async(MPI_Comm world, int num_io_procs, int *io_proc_list,
  * gets the iosysid for each component.
  *
  * @return PIO_NOERR on success, error code otherwise.
- * @ingroup PIO_init_c
- * @author Jim Edwards
+ * @ingroup PIO_init_async
+ * @author Jim Edwards, Ed Hartnet
  */
 int
 PIOc_init_async_from_comms(MPI_Comm world, int component_count, MPI_Comm *comp_comm,
@@ -678,7 +687,7 @@ PIOc_init_async_from_comms(MPI_Comm world, int component_count, MPI_Comm *comp_c
  * @param iosysidp pointer to array of length component_count that
  * gets the iosysid for each component.
  * @returns 0 for success, error code otherwise
- * @ingroup PIO_init_c
+ * @ingroup PIO_init_async
  * @author Jim Edwards
  */
 int
@@ -693,7 +702,6 @@ PIOc_init_async_from_F90(int f90_world_comm,
                          int *f90_comp_comm,
                          int rearranger,
                          int *iosysidp)
-    
 {
     int ret = PIO_NOERR;
     MPI_Comm io_comm, comp_comm;
@@ -701,8 +709,8 @@ PIOc_init_async_from_F90(int f90_world_comm,
     
     maxprocs_per_component = flat_proc_list_size/component_count;
 
-
     int **proc_list = (int **) malloc(sizeof(int *) *component_count);
+
     for(int i=0; i< component_count; i++){
         proc_list[i] = (int *) malloc(sizeof(int) * maxprocs_per_component);
         for(int j=0;j<procs_per_component[i]; j++)
@@ -756,7 +764,7 @@ PIOc_init_async_from_F90(int f90_world_comm,
  * @param iosysidp pointer to array of length component_count that
  * gets the iosysid for each component.
  * @returns 0 for success, error code otherwise
- * @ingroup PIO_init_c
+ * @ingroup PIO_init_async
  * @author Jim Edwards
  */
 int
