@@ -374,7 +374,7 @@ write_darray_multi_par(file_desc_t *file, int nvars, int fndims, const int *vari
 #ifdef _PNETCDF
     int dsize;             /* Data size (for one region). */
 #endif
-    int ierr = PIO_NOERR;
+    int ierr;
 #if USE_VARD_WRITE
     PIO_Offset gdim0;  /* global size of first dimension if no unlimited dimension and ndims<fndims */
     bool use_vard=true;
@@ -383,7 +383,7 @@ write_darray_multi_par(file_desc_t *file, int nvars, int fndims, const int *vari
     /* Check inputs. */
     pioassert(file && file->iosystem && varids && varids[0] >= 0 && varids[0] <= PIO_MAX_VARS &&
               iodesc, "invalid input", __FILE__, __LINE__);
-
+    ierr = PIO_NOERR;
     PLOG((1, "write_darray_multi_par nvars = %d iodesc->ndims = %d iodesc->mpitype = %d "
           "iodesc->maxregions = %d iodesc->llen = %d", nvars, iodesc->ndims,
           iodesc->mpitype, iodesc->maxregions, iodesc->llen));
@@ -651,6 +651,7 @@ write_darray_multi_par(file_desc_t *file, int nvars, int fndims, const int *vari
 
 
                         vdesc->nreqs++;
+                        //if(ierr) printf("%s %d %d %d %d %d\n",__FILE__,__LINE__,ierr,nv,startlist[nv][1],countlist[nv][1]);
 #endif
                     }
 
