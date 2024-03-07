@@ -34,7 +34,7 @@ my $outfile;
 #                foo(1, bar), foo(2, bar), foo(3, bar), ...
 
 # defaults
-my @types = qw(text real double int short);
+my @types = qw(text real double int short long);
 my $vtype = {'text' => 'character(len=*)',
 	     'real' => 'real(r4)',
 	     'double' => 'real(r8)',
@@ -60,19 +60,22 @@ my $mpitype = {'text' => 'MPI_CHARACTER',
 	       'real' => 'MPI_REAL4',
 	       'short' => 'MPI_SHORT',
 	       'double' => 'MPI_REAL8',
-	       'int' => 'MPI_INTEGER'};
+               'int' => 'MPI_INTEGER',
+               'long' => 'MPI_LONG'};
 # Netcdf C datatypes
 my $nctype = {'text' => 'text',
 	      'real' => 'float',
 	      'short' => 'short',
 	      'double' => 'double',
-	      'int' => 'int'};
+              'int' => 'int',
+               'long' => 'int64'};
 # C interoperability types
 my $ctype = {'text' => 'character(C_CHAR)',
 	     'real' => 'real(C_FLOAT)',
 	     'double' => 'real(C_DOUBLE)',
 	     'int' => 'integer(C_INT)',
-             'short' => 'integer(C_SHORT)'};
+             'short' => 'integer(C_SHORT)',
+             'long' => 'integer(C_LONG)'};
 
 
 

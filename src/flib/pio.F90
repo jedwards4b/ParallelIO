@@ -42,7 +42,7 @@ module pio
        pio_rearr_opt_t, pio_rearr_comm_fc_opt_t, pio_rearr_comm_fc_2d_enable,&
        pio_rearr_comm_fc_1d_comp2io, pio_rearr_comm_fc_1d_io2comp,&
        pio_rearr_comm_fc_2d_disable, pio_rearr_comm_unlimited_pend_req,&
-       pio_rearr_comm_p2p, pio_rearr_comm_coll, pio_short, &
+       pio_rearr_comm_p2p, pio_rearr_comm_coll, pio_short, pio_long,&
        pio_int, pio_real, pio_double, pio_noerr, iotype_netcdf, &
        iotype_pnetcdf,  pio_iotype_netcdf4p, pio_iotype_netcdf4c, &
        pio_iotype_pnetcdf,pio_iotype_netcdf, &

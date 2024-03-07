@@ -570,10 +570,10 @@ CONTAINS
     CHARACTER(LEN=*), DIMENSION(:), ALLOCATABLE, INTENT(OUT) :: data_type_descs
     INTEGER, INTENT(OUT) :: num_data_types
 
-    !num_data_types = 4
-    num_data_types = 3
-    ALLOCATE(data_types(4))
-    ALLOCATE(data_type_descs(4))
+    num_data_types = 6
+    
+    ALLOCATE(data_types(num_data_types))
+    ALLOCATE(data_type_descs(num_data_types))
 
     data_types(1) = PIO_double
     data_type_descs(1) = "PIO_double"
@@ -581,11 +581,14 @@ CONTAINS
     data_type_descs(2) = "PIO_real"
     data_types(3) = PIO_int
     data_type_descs(3) = "PIO_int"
-    ! FIXME: Check why some PIO functions don't support the char type
-    !data_types(4) = PIO_char
-    !data_type_descs(4) = "PIO_char"
-
-  END SUBROUTINE PIO_TF_Get_data_types
+    
+    data_types(4) = PIO_char
+    data_type_descs(4) = "PIO_char"
+    data_types(5) = PIO_short
+    data_type_descs(5) = "PIO_short"
+    data_types(6) = PIO_long
+    data_type_descs(6) = "PIO_long"
+END SUBROUTINE PIO_TF_Get_data_types
 
   ! Get original (multi-d) index string from 1d (reshaped) index
   SUBROUTINE PIO_TF_Get_idx_from_1d_idx(idx_1d, arr_shape, idx_str)

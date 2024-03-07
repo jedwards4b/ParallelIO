@@ -15,7 +15,7 @@ module pionfput_mod
   use perf_mod, only : t_startf, t_stopf      ! _EXTERNAL
 #endif
   use iso_c_binding
-  use pio_kinds, only: i2,i4,r4,r8
+  use pio_kinds, only: i2,i4,i8,r4,r8
   use pio_types, only : file_desc_t, var_desc_t, pio_noerr
 
   implicit none

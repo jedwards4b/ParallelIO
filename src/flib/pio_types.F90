@@ -41,6 +41,7 @@
 !!  - PIO_real : 4-byte reals
 !!  - PIO_int :  4-byte integers
 !!  - PIO_short : 2-byte integers
+!!  - PIO_long : 8-byte integers
 !!  - PIO_char : character
 
 module pio_types
@@ -130,6 +131,7 @@ module pio_types
   integer, public, parameter :: PIO_num_OST =  16      !< num ost
   integer, public, parameter :: PIO_global = 0         !< global atts
   integer, public, parameter :: PIO_unlimited = 0      !< unlimited dimension
+  integer, public, parameter :: PIO_long = 7           !< long int type
   integer, public, parameter :: PIO_double = 6         !< double type
   integer, public, parameter :: PIO_real   = 5         !< real type
   integer, public, parameter :: PIO_int    = 4         !< int type
