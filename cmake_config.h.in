@@ -46,4 +46,9 @@
 /* Does PIO support using pnetcdf for I/O? */
 #cmakedefine _PNETCDF
 
+/* Does MPI have mpi_f08 module?*/
+#cmakedefine MPI_HAS_F08_MOD
+
+#cmakedefine MPI_HAS_Fortran_MOD
+
 #endif /* _PIO_CONFIG_ */

@@ -2,6 +2,7 @@
 ! PIO Testing framework utilities module
 MODULE pio_tutil
   USE pio
+
   IMPLICIT NONE
   ! Error/Return values
   INTEGER ::  pio_tf_nerrs_total_
@@ -37,7 +38,7 @@ MODULE pio_tutil
   ! integer types
   INTEGER, PARAMETER, PUBLIC :: fc_short   = selected_int_kind(4)
   INTEGER, PARAMETER, PUBLIC :: fc_int     = selected_int_kind(6)
-
+  INTEGER, PARAMETER, PUBLIC :: fc_long    = selected_int_kind(13)
   ! Misc constants
   INTEGER, PARAMETER :: PIO_TF_MAX_STR_LEN=100
 
@@ -98,18 +99,24 @@ MODULE pio_tutil
     MODULE PROCEDURE                  &
         PIO_TF_Check_int_val_val,     &
         PIO_TF_Check_short_val_val,     &
+        PIO_TF_Check_long_val_val,     &
         PIO_TF_Check_real_val_val,     &
         PIO_TF_Check_double_val_val,     &
         PIO_TF_Check_int_arr_val,     &
+        PIO_TF_Check_long_arr_val,     &
         PIO_TF_Check_int_arr_arr,     &
         PIO_TF_Check_int_arr_arr_tol, &
         PIO_TF_Check_2d_int_arr_arr,  &
         PIO_TF_Check_3d_int_arr_arr,  &
         PIO_TF_Check_short_arr_val,     &
         PIO_TF_Check_short_arr_arr,     &
+        PIO_TF_Check_long_arr_arr,     &
         PIO_TF_Check_short_arr_arr_tol, &
+        PIO_TF_Check_long_arr_arr_tol, &
         PIO_TF_Check_2d_short_arr_arr,  &
         PIO_TF_Check_3d_short_arr_arr,  &
+        PIO_TF_Check_2d_long_arr_arr,  &
+        PIO_TF_Check_3d_long_arr_arr,  &
         PIO_TF_Check_real_arr_val,    &
         PIO_TF_Check_real_arr_arr,    &
         PIO_TF_Check_2d_real_arr_arr, &
@@ -721,7 +728,13 @@ END SUBROUTINE PIO_TF_Get_data_types
 
     PIO_TF_Check_int_val_val = val1 == val2
   END FUNCTION
-  LOGICAL FUNCTION PIO_TF_Check_short_val_val(val1, val2)
+  
+  LOGICAL FUNCTION PIO_TF_Check_long_val_val(val1, val2)
+    INTEGER(kind=fc_long), INTENT(IN) :: val1, val2
+
+    PIO_TF_Check_long_val_val = val1 == val2
+  END FUNCTION
+LOGICAL FUNCTION PIO_TF_Check_short_val_val(val1, val2)
     INTEGER(kind=fc_short), INTENT(IN) :: val1, val2
 
     PIO_TF_Check_short_val_val = val1 == val2
@@ -745,6 +758,17 @@ END SUBROUTINE PIO_TF_Get_data_types
     ALLOCATE(arr_val(SIZE(arr)))
     arr_val = val
     PIO_TF_Check_int_arr_val = PIO_TF_Check_int_arr_arr(arr, arr_val)
+    DEALLOCATE(arr_val)
+  END FUNCTION
+
+  LOGICAL FUNCTION PIO_TF_Check_long_arr_val(arr, val)
+    INTEGER(kind=fc_long), DIMENSION(:), INTENT(IN) :: arr
+    INTEGER(kind=fc_long), INTENT(IN) :: val
+    INTEGER(kind=fc_long), DIMENSION(:), ALLOCATABLE :: arr_val
+
+    ALLOCATE(arr_val(SIZE(arr)))
+    arr_val = val
+    PIO_TF_Check_long_arr_val = PIO_TF_Check_long_arr_arr(arr, arr_val)
     DEALLOCATE(arr_val)
   END FUNCTION
 
@@ -786,15 +810,14 @@ END SUBROUTINE PIO_TF_Get_data_types
     DEALLOCATE(exp_arr_val)
   END FUNCTION
 
-
-  LOGICAL FUNCTION PIO_TF_Check_short_arr_arr_(arr, exp_arr, arr_shape)
+LOGICAL FUNCTION PIO_TF_Check_long_arr_arr_(arr, exp_arr, arr_shape)
 #ifndef NO_MPIMOD
     USE mpi
 #else
     include 'mpif.h'
 #endif
-    INTEGER(FC_SHORT), DIMENSION(:), INTENT(IN) :: arr
-    INTEGER(FC_SHORT), DIMENSION(:), INTENT(IN) :: exp_arr
+    INTEGER(fc_long), DIMENSION(:), INTENT(IN) :: arr
+    INTEGER(fc_long), DIMENSION(:), INTENT(IN) :: exp_arr
     INTEGER, DIMENSION(:), INTENT(IN) :: arr_shape
     CHARACTER(LEN=PIO_TF_MAX_STR_LEN) :: idx_str
     INTEGER :: arr_sz, i, ierr
@@ -846,10 +869,79 @@ END SUBROUTINE PIO_TF_Get_data_types
       END IF
       deallocate(gfail_info)
    end if
-    PIO_TF_Check_short_arr_arr_ = gequal
-  END FUNCTION PIO_TF_Check_short_arr_arr_
+    PIO_TF_Check_long_arr_arr_ = gequal
+  END FUNCTION PIO_TF_Check_long_arr_arr_
 
-  LOGICAL FUNCTION PIO_TF_Check_short_arr_arr(arr, exp_arr)
+  LOGICAL FUNCTION PIO_TF_Check_long_arr_arr(arr, exp_arr)
+    INTEGER(fc_long), DIMENSION(:), INTENT(IN) :: arr
+    INTEGER(fc_long), DIMENSION(:), INTENT(IN) :: exp_arr
+
+    PIO_TF_Check_long_arr_arr = PIO_TF_Check_long_arr_arr_(arr, exp_arr, SHAPE(arr))
+  END FUNCTION PIO_TF_Check_long_arr_arr
+
+  LOGICAL FUNCTION PIO_TF_Check_short_arr_arr_(arr, exp_arr, arr_shape)
+#ifndef NO_MPIMOD
+      USE mpi
+#else
+      include 'mpif.h'
+#endif
+      INTEGER(FC_SHORT), DIMENSION(:), INTENT(IN) :: arr
+      INTEGER(FC_SHORT), DIMENSION(:), INTENT(IN) :: exp_arr
+      INTEGER, DIMENSION(:), INTENT(IN) :: arr_shape
+      CHARACTER(LEN=PIO_TF_MAX_STR_LEN) :: idx_str
+      INTEGER :: arr_sz, i, ierr
+      ! Not equal at id = nequal_idx
+      INTEGER :: nequal_idx
+      ! Local and global equal bools
+      LOGICAL :: lequal, gequal
+      TYPE failed_info
+        SEQUENCE
+        INTEGER :: idx
+        INTEGER :: val
+        INTEGER :: exp_val
+      END TYPE failed_info
+      TYPE (failed_info) :: lfail_info
+      TYPE (failed_info), DIMENSION(:), ALLOCATABLE :: gfail_info
+  
+      arr_sz = SIZE(arr)
+      lequal = .TRUE.;
+      gequal = .TRUE.;
+      nequal_idx = -1;
+      IF (arr_sz /= SIZE(exp_arr)) THEN
+        PRINT *, "PIO_TF: Unable to compare arrays of different sizes", arr_sz, " and", SIZE(exp_arr)
+      END IF
+      DO i=1, arr_sz
+        IF (arr(i) /= exp_arr(i)) THEN
+          lequal = .FALSE.
+          nequal_idx = i
+        END IF
+      END DO
+      CALL MPI_ALLREDUCE(lequal, gequal, 1, MPI_LOGICAL, MPI_LAND, pio_tf_comm_, ierr)
+      IF (.NOT. gequal) THEN
+        lfail_info % idx = nequal_idx
+        IF (nequal_idx /= -1) THEN
+          lfail_info % val     = arr(nequal_idx)
+          lfail_info % exp_val = exp_arr(nequal_idx)
+        END IF
+        ALLOCATE(gfail_info(pio_tf_world_sz_))
+        ! Gather the ranks where assertion failed
+        CALL MPI_GATHER(lfail_info, 3, MPI_INTEGER, gfail_info, 3, MPI_INTEGER, 0, pio_tf_comm_, ierr)
+        IF (pio_tf_world_rank_ == 0) THEN
+           DO i=1,pio_tf_world_sz_
+              IF(gfail_info(i) % idx /= -1) THEN
+                 CALL PIO_TF_Get_idx_from_1d_idx(gfail_info(i) % idx, arr_shape, idx_str)
+                 PRINT *, "PIO_TF: Fatal Error: rank =", i, ", Val[",&
+                      trim(idx_str), "]=",&
+                      gfail_info(i) % val, ", Expected = ", gfail_info(i) % exp_val
+              END IF
+           END DO
+        END IF
+        deallocate(gfail_info)
+     end if
+      PIO_TF_Check_short_arr_arr_ = gequal
+    END FUNCTION PIO_TF_Check_short_arr_arr_
+  
+    LOGICAL FUNCTION PIO_TF_Check_short_arr_arr(arr, exp_arr)
     INTEGER(FC_SHORT), DIMENSION(:), INTENT(IN) :: arr
     INTEGER(FC_SHORT), DIMENSION(:), INTENT(IN) :: exp_arr
 
@@ -867,6 +959,15 @@ END SUBROUTINE PIO_TF_Get_data_types
 
     PIO_TF_Check_short_arr_arr_tol = PIO_TF_Check_short_arr_arr(arr, exp_arr)
   END FUNCTION PIO_TF_Check_short_arr_arr_tol
+
+  LOGICAL FUNCTION PIO_TF_Check_long_arr_arr_tol(arr, exp_arr, tol)
+  INTEGER(fc_long), DIMENSION(:), INTENT(IN) :: arr
+  INTEGER(fc_long), DIMENSION(:), INTENT(IN) :: exp_arr
+  REAL, INTENT(IN) :: tol
+  if (tol /= 0) continue ! to suppress warning
+
+  PIO_TF_Check_long_arr_arr_tol = PIO_TF_Check_long_arr_arr(arr, exp_arr)
+END FUNCTION PIO_TF_Check_long_arr_arr_tol
 
   LOGICAL FUNCTION PIO_TF_Check_short_arr_val(arr, val)
     INTEGER(FC_SHORT), DIMENSION(:), INTENT(IN) :: arr
@@ -898,26 +999,64 @@ END SUBROUTINE PIO_TF_Get_data_types
     DEALLOCATE(exp_arr_val)
   END FUNCTION PIO_TF_Check_2d_short_arr_arr
 
-  LOGICAL FUNCTION PIO_TF_Check_3d_short_arr_arr(arr, exp_arr)
-    INTEGER(FC_SHORT), DIMENSION(:,:,:), INTENT(IN) :: arr
-    INTEGER(FC_SHORT), DIMENSION(:,:,:), INTENT(IN) :: exp_arr
+  LOGICAL FUNCTION PIO_TF_Check_2d_long_arr_arr(arr, exp_arr)
+  INTEGER(FC_long), DIMENSION(:,:), INTENT(IN) :: arr
+  INTEGER(FC_long), DIMENSION(:,:), INTENT(IN) :: exp_arr
 
-    INTEGER(FC_SHORT), DIMENSION(:), ALLOCATABLE :: arr_val
-    INTEGER(FC_SHORT), DIMENSION(:), ALLOCATABLE :: exp_arr_val
-    INTEGER, PARAMETER :: NDIMS = 2
+  INTEGER(FC_long), DIMENSION(:), ALLOCATABLE :: arr_val
+  INTEGER(FC_long), DIMENSION(:), ALLOCATABLE :: exp_arr_val
+  INTEGER, PARAMETER :: NDIMS = 2
 
-    ALLOCATE(arr_val(SIZE(arr)))
-    ALLOCATE(exp_arr_val(SIZE(exp_arr)))
-    arr_val = RESHAPE(arr,(/SIZE(arr)/))
-    exp_arr_val = RESHAPE(exp_arr,(/SIZE(exp_arr)/))
+  ALLOCATE(arr_val(SIZE(arr)))
+  ALLOCATE(exp_arr_val(SIZE(exp_arr)))
+  arr_val = RESHAPE(arr,(/SIZE(arr)/))
+  exp_arr_val = RESHAPE(exp_arr,(/SIZE(exp_arr)/))
 
-    PIO_TF_Check_3d_short_arr_arr = PIO_TF_Check_short_arr_arr_(arr_val, exp_arr_val,&
-                                    SHAPE(arr))
-    DEALLOCATE(arr_val)
-    DEALLOCATE(exp_arr_val)
-  END FUNCTION PIO_TF_Check_3d_short_arr_arr
+  PIO_TF_Check_2d_long_arr_arr = PIO_TF_Check_long_arr_arr_(arr_val, exp_arr_val,&
+                                  SHAPE(arr))
+  DEALLOCATE(arr_val)
+  DEALLOCATE(exp_arr_val)
+END FUNCTION PIO_TF_Check_2d_long_arr_arr
 
-  LOGICAL FUNCTION PIO_TF_Check_real_arr_arr_tol_(arr, exp_arr, arr_shape, tol)
+LOGICAL FUNCTION PIO_TF_Check_3d_long_arr_arr(arr, exp_arr)
+INTEGER(FC_long), DIMENSION(:,:,:), INTENT(IN) :: arr
+INTEGER(FC_long), DIMENSION(:,:,:), INTENT(IN) :: exp_arr
+
+INTEGER(FC_long), DIMENSION(:), ALLOCATABLE :: arr_val
+INTEGER(FC_long), DIMENSION(:), ALLOCATABLE :: exp_arr_val
+INTEGER, PARAMETER :: NDIMS = 2
+
+ALLOCATE(arr_val(SIZE(arr)))
+ALLOCATE(exp_arr_val(SIZE(exp_arr)))
+arr_val = RESHAPE(arr,(/SIZE(arr)/))
+exp_arr_val = RESHAPE(exp_arr,(/SIZE(exp_arr)/))
+
+PIO_TF_Check_3d_long_arr_arr = PIO_TF_Check_long_arr_arr_(arr_val, exp_arr_val,&
+                                SHAPE(arr))
+DEALLOCATE(arr_val)
+DEALLOCATE(exp_arr_val)
+END FUNCTION PIO_TF_Check_3d_long_arr_arr
+
+LOGICAL FUNCTION PIO_TF_Check_3d_short_arr_arr(arr, exp_arr)
+INTEGER(FC_short), DIMENSION(:,:,:), INTENT(IN) :: arr
+INTEGER(FC_short), DIMENSION(:,:,:), INTENT(IN) :: exp_arr
+
+INTEGER(FC_short), DIMENSION(:), ALLOCATABLE :: arr_val
+INTEGER(FC_short), DIMENSION(:), ALLOCATABLE :: exp_arr_val
+INTEGER, PARAMETER :: NDIMS = 2
+
+ALLOCATE(arr_val(SIZE(arr)))
+ALLOCATE(exp_arr_val(SIZE(exp_arr)))
+arr_val = RESHAPE(arr,(/SIZE(arr)/))
+exp_arr_val = RESHAPE(exp_arr,(/SIZE(exp_arr)/))
+
+PIO_TF_Check_3d_short_arr_arr = PIO_TF_Check_short_arr_arr_(arr_val, exp_arr_val,&
+                                SHAPE(arr))
+DEALLOCATE(arr_val)
+DEALLOCATE(exp_arr_val)
+END FUNCTION PIO_TF_Check_3d_short_arr_arr
+
+LOGICAL FUNCTION PIO_TF_Check_real_arr_arr_tol_(arr, exp_arr, arr_shape, tol)
 #ifndef NO_MPIMOD
     USE mpi
 #else

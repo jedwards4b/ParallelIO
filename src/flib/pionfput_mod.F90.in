@@ -32,7 +32,7 @@ module pionfput_mod
      module procedure put_var1_{TYPE}, put_var1_vdesc_{TYPE}
   end interface
   interface
-     !TYPE text,int,double,short
+     !TYPE text,int,double,short,long
      integer(C_INT) function PIOc_put_var_{TYPE}(ncid, varid, op) &
           bind(C,name="PIOc_put_var_{TYPE}")
        use iso_c_binding
@@ -42,7 +42,7 @@ module pionfput_mod
      end function PIOc_put_var_{TYPE}
   end interface
   interface
-     ! TYPE text,int,double,short
+     ! TYPE text,int,double,short,long
      integer(C_INT) function PIOc_put_vara_{TYPE}(ncid, varid, start, count, op) &
           bind(C,name="PIOc_put_vara_{TYPE}")
        use iso_c_binding
@@ -94,7 +94,7 @@ contains
 
     deallocate(count)
   end function put_var1_text
-! TYPE int,real,double,short
+! TYPE int,real,double,short,long
 !>
 !! @public
 !! @ingroup PIO_put_var
@@ -226,7 +226,7 @@ contains
   end function put_var_{DIMS}d_text
 
 ! DIMS 1,2,3,4,5
-! TYPE int,real,double,short
+! TYPE int,real,double,short,long
 !>
 !! @public
 !! @ingroup PIO_put_var
@@ -258,7 +258,7 @@ contains
   end function put_var_internal_{TYPE}
 
 ! DIMS 1,2,3,4,5
-! TYPE int,real,double,short
+! TYPE int,real,double,short,long
 !>
 !! @public
 !! @ingroup PIO_put_var
@@ -283,7 +283,7 @@ contains
 
   end function put_var_{DIMS}d_{TYPE}
 
-! TYPE int,real,double,short
+! TYPE int,real,double,short,long
 !>
 !! @public
 !! @ingroup PIO_put_var
@@ -311,7 +311,7 @@ contains
   end function put_var_0d_{TYPE}
 
 
-!! TYPE int,real,double,short
+!! TYPE int,real,double,short,long
   integer function put_vara_internal_{TYPE} (ncid,varid,start,count, ival) result(ierr)
     integer, intent(in) :: ncid
     integer, intent(in) :: varid
@@ -507,7 +507,7 @@ contains
 
   end subroutine Fstring2Cstring_{DIMS}d
 
-! TYPE int,real,double,short
+! TYPE int,real,double,short,long
 ! DIMS 1,2,3,4,5
 !>
 !! @public

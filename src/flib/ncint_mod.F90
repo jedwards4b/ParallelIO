@@ -20,8 +20,12 @@ module ncint_mod
   use pio_nf, only : pio_set_log_level
   use piolib_mod, only : pio_init, pio_finalize, pio_initdecomp
 
+#ifdef MPIF08
+  use mpi_f08
+#else 
 #ifndef NO_MPIMOD
   use mpi    ! _EXTERNAL
+#endif
 #endif
   implicit none
   private

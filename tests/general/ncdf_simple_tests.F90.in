@@ -123,7 +123,7 @@ PIO_TF_AUTO_TEST_SUB_BEGIN test_data_conversion
   dims(1) = VEC_LOCAL_SZ * pio_tf_world_sz_
   compdof = VEC_LOCAL_SZ * pio_tf_world_rank_ + compdof_rel_disps
   wbuf = pio_tf_world_rank_;
-
+  
 ! Type conversions here to avoid gfortran warnings
 
   exp_val = pio_tf_world_rank_
@@ -157,6 +157,7 @@ PIO_TF_AUTO_TEST_SUB_BEGIN test_data_conversion
   else
      ! Read the variable back (data conversion might occur)
      call PIO_read_darray(pio_file, pio_var, riodesc, rbuf, ierr)
+  print *, __FILE__,__LINE__,rbuf
      PIO_TF_CHECK_ERR(ierr, "Failed to read darray : " // trim(data_fname))
      PIO_TF_CHECK_VAL((rbuf, exp_val), "Got wrong val")
   endif

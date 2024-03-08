@@ -114,9 +114,13 @@ module piolib_mod
 #ifdef TIMING
   use perf_mod, only : t_startf, t_stopf     ! _EXTERNAL
 #endif
-#ifndef NO_MPIMOD
-  use mpi    ! _EXTERNAL
-#endif
+!#ifdef MPIF08
+  use mpi_f08
+!#else
+!#ifndef NO_MPIMOD
+!  use mpi    ! _EXTERNAL
+!#endif
+!#endif
   implicit none
   private
 #ifdef NO_MPIMOD

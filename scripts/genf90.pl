@@ -41,7 +41,7 @@ my $vtype = {'text' => 'character(len=*)',
 	     'int'    => 'integer(i4)',
 	     'short'  => 'integer(i2)',
 	     'long'   => 'integer(i8)',
-             'logical' => 'logical' };
+         'logical' => 'logical' };
 my $itype = {'text' => 100,
 	     'real' => 101,
 	     'double' => 102,
@@ -60,22 +60,22 @@ my $mpitype = {'text' => 'MPI_CHARACTER',
 	       'real' => 'MPI_REAL4',
 	       'short' => 'MPI_SHORT',
 	       'double' => 'MPI_REAL8',
-               'int' => 'MPI_INTEGER',
-               'long' => 'MPI_LONG'};
+           'int' => 'MPI_INTEGER',
+           'long' => 'MPI_LONG'};
 # Netcdf C datatypes
 my $nctype = {'text' => 'text',
 	      'real' => 'float',
 	      'short' => 'short',
 	      'double' => 'double',
-              'int' => 'int',
-               'long' => 'int64'};
+          'int' => 'int',
+          'long' => 'int64'};
 # C interoperability types
 my $ctype = {'text' => 'character(C_CHAR)',
 	     'real' => 'real(C_FLOAT)',
 	     'double' => 'real(C_DOUBLE)',
 	     'int' => 'integer(C_INT)',
-             'short' => 'integer(C_SHORT)',
-             'long' => 'integer(C_LONG)'};
+         'short' => 'integer(C_SHORT)',
+         'long' => 'integer(C_LONG)'};
 
 
 
@@ -339,7 +339,7 @@ sub buildout{
 		}
 
 		my $repeatstr = build_repeatstr($dims);
-
+        print "$type $nctype->{$type}";
 		my $str = $func;
 		$str =~ s/{TYPE}/$type/g;
 		$str =~ s/{VTYPE}/$vtype->{$type}/g;
@@ -378,7 +378,9 @@ sub buildout{
 	}
     }elsif($func =~ /{TYPE}/){
 	my ($type);
+
 	foreach $type (@ltypes){
+   	    #print "HERERHRERE $type $nctype->{$type} $ctype->{$type} $vtype->{$type}\n";
 	    my $str = $func;
 	    $str =~ s/{TYPE}/$type/g;
 	    $str =~ s/{VTYPE}/$vtype->{$type}/g;

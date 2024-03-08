@@ -16,7 +16,7 @@ module pionfget_mod
 #ifdef TIMING
   use perf_mod, only : t_startf, t_stopf      ! _EXTERNAL
 #endif
-  use pio_kinds, only: i2,i4,r4,r8, pio_offset_kind
+  use pio_kinds, only: i2,i4,i8,r4,r8, pio_offset_kind
   use pio_types, only : file_desc_t, var_desc_t
   use pio_support, only : replace_c_null
   implicit none
@@ -41,7 +41,7 @@ module pionfget_mod
     end function PIOc_get_var_float
  end interface
  interface
-    ! TYPE text,double,short,int
+    ! TYPE text,double,int,short,long
     integer(C_INT) function PIOc_get_var_{TYPE} (ncid, varid, ival) &
          bind(C,name="PIOc_get_var_{TYPE}")
       use iso_c_binding
@@ -53,7 +53,7 @@ module pionfget_mod
 
 
  interface
-    !TYPE int,double,short,text
+    !TYPE int,double,short,text,long
     integer(C_INT) function PIOc_get_vara_{TYPE} (ncid, varid, start, count, ival) &
          bind(C,name="PIOc_get_vara_{TYPE}")
       use iso_c_binding
@@ -97,7 +97,7 @@ CONTAINS
     ierr = get_var1_id_{TYPE} (file%fh, varid, index, ival)
 
   end function get_var1_{TYPE}
-! TYPE int,real,double,short
+! TYPE int,real,double,short,long
   integer function get_var1_id_{TYPE} (ncid,varid, index, ival) result(ierr)
     integer, intent(in) :: ncid
     integer, intent(in) :: varid, index(:)
@@ -181,7 +181,7 @@ CONTAINS
   end function get_var1_vdesc_{TYPE}
 
 
-! TYPE int,real,double,short
+! TYPE int,real,double,short,long
 ! DIMS 1,2,3,4,5
 !>
 !! @public
@@ -294,7 +294,7 @@ CONTAINS
   end function Get_var_0d_text
 
 
-! TYPE int,real,double,short
+! TYPE int,real,double,short,long
 ! DIMS 0
   integer function get_var_0d_{TYPE} (File,varid, ival) result(ierr)
     use iso_c_binding
@@ -337,7 +337,7 @@ CONTAINS
 
   end function get_var_text_internal
 
-! TYPE int,real,double,short
+! TYPE int,real,double,short,long
   integer function get_var_{TYPE}_internal  (ncid,varid, ival) result(ierr)
     integer, intent(in) :: ncid
     integer, intent(in) :: varid
@@ -347,7 +347,7 @@ CONTAINS
 
   end function get_var_{TYPE}_internal
 
-! TYPE int,real,double,short
+! TYPE int,real,double,short,long
   integer function get_vara_{TYPE}_internal  (ncid,varid, start, count, ival) result(ierr)
     use pio_nf, only : pio_inq_varndims
     integer, intent(in) :: ncid
@@ -399,7 +399,7 @@ CONTAINS
     deallocate(ccount, cstart)
   end function get_vara_text_internal
 
-! TYPE int,real,double,short
+! TYPE int,real,double,short,long
 ! DIMS 1,2,3,4,5
   integer function get_var_{DIMS}d_{TYPE} (File,varid, ival) result(ierr)
     type (File_desc_t), intent(in) :: File

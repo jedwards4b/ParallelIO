@@ -158,49 +158,16 @@ if (PIO_USE_MPISERIAL)
     set (WITH_PNETCDF FALSE)
     set (MPI_Fortran_INCLUDE_PATH ${MPISERIAL_Fortran_INCLUDE_DIRS})
   endif ()
-endif ()
-
-# Check MPI I/O capabilities
-find_path(MPIF_H_PATH
-  NAMES mpif.h
-  PATHS ${MPI_Fortran_INCLUDE_PATH}
-  NO_DEFAULT_PATH)
-if (MPIF_H_PATH)
-  check_macro (MPI_HAS_MPIIO
-    NAME TryMPIIO.f90
-    HINTS ${CMAKE_MODULE_PATH}
-    DEFINITIONS -I${MPIF_H_PATH}
-    COMMENT "whether MPIIO is supported")
-  if (${MPI_HAS_MPIIO})
-    message (STATUS "MPIIO verified and enabled.")
-    target_compile_definitions (piof
-      PUBLIC USEMPIIO)
-  else ()
-    message (STATUS "MPIIO failed verification and therefore disabled.")
-  endif ()
-else ()
-  message (STATUS "MPIIO not detected and therefore disabled.")
-endif ()
-
-# Check for MPI Fortran module
-find_path(MPIMOD_PATH
-  NAMES mpi.mod MPI.mod
-  HINTS ${MPI_Fortran_INCLUDE_PATH})
-
-check_macro (MPI_HAS_Fortran_MOD
-  NAME TryMPIMod.f90
-  HINTS ${CMAKE_MODULE_PATH}
-  DEFINITIONS -I${MPIMOD_PATH}
-  COMMENT "whether MPI Fortran module is supported")
-if (${MPI_HAS_Fortran_MOD})
-  message (STATUS "MPI Fortran module verified and enabled.")
-else ()
-  message (STATUS "MPI Fortran module failed verification and therefore disabled.")
-  if (PIO_ENABLE_TIMING AND NOT GPTL_Fortran_Perf_FOUND)
-    target_compile_definitions (gptl
-      PUBLIC NO_MPIMOD)
+else()
+  if(MPI_Fortran_HAVE_F08_MODULE)
+    message(STATUS "MPI Fortran 2008 (mpi_f08) support: YES")
+    set (MPI_HAS_F08_MOD TRUE PARENT_SCOPE)
+  else()
+    if(MPI_Fortran_HAVE_MODULE)
+      message(STATUS "MPI Fortran module support: YES")
+      set (MPI_HAS_Fortran_MOD TRUE PARENT_SCOPE)
+    endif()
   endif()
-  target_compile_definitions (piof PUBLIC NO_MPIMOD)
 endif ()
 
 #===== GPTL =====
