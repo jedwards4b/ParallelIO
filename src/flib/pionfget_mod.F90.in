@@ -16,7 +16,7 @@ module pionfget_mod
 #ifdef TIMING
   use perf_mod, only : t_startf, t_stopf      ! _EXTERNAL
 #endif
-  use pio_kinds, only: i2,i4,r4,r8, pio_offset_kind
+  use pio_kinds, only: i2,i4,i8,r4,r8, pio_offset_kind
   use pio_types, only : file_desc_t, var_desc_t
   use pio_support, only : replace_c_null
   implicit none
@@ -32,18 +32,18 @@ module pionfget_mod
  character(len=*), parameter :: modName='pionfget_mod'
 
  interface
-    integer(C_INT) function PIOc_get_var_float (ncid, varid, ival) &
+    integer(C_INT) function PIOc_get_var_real (ncid, varid, ival) &
          bind(C,name="PIOc_get_var_float")
       use iso_c_binding
       integer(C_INT), value :: ncid
       integer(C_INT), value :: varid
       real(C_float) :: ival(*)
-    end function PIOc_get_var_float
+    end function PIOc_get_var_real
  end interface
  interface
-    ! TYPE text,double,short,int
+    ! TYPE text,double,short,int,int64
     integer(C_INT) function PIOc_get_var_{TYPE} (ncid, varid, ival) &
-         bind(C,name="PIOc_get_var_{TYPE}")
+         bind(C,name="PIOc_get_var_{NCTYPE}")
       use iso_c_binding
       integer(C_INT), value :: ncid
       integer(C_INT), value :: varid
@@ -53,9 +53,9 @@ module pionfget_mod
 
 
  interface
-    !TYPE int,double,short,text
+    !TYPE int,double,short,text,int64
     integer(C_INT) function PIOc_get_vara_{TYPE} (ncid, varid, start, count, ival) &
-         bind(C,name="PIOc_get_vara_{TYPE}")
+         bind(C,name="PIOc_get_vara_{NCTYPE}")
       use iso_c_binding
       integer(C_INT), value :: ncid
       integer(C_INT), value :: varid
@@ -65,7 +65,7 @@ module pionfget_mod
     end function PIOc_get_vara_{TYPE}
  end interface
  interface
-    integer(C_INT) function PIOc_get_vara_float (ncid, varid, start, count, ival) &
+    integer(C_INT) function PIOc_get_vara_real (ncid, varid, start, count, ival) &
          bind(C,name="PIOc_get_vara_float")
       use iso_c_binding
       integer(C_INT), value :: ncid
@@ -73,7 +73,7 @@ module pionfget_mod
       integer(C_SIZE_T)  :: start(*)
       integer(C_SIZE_T)  :: count(*)
       real(C_FLOAT)  :: ival(*)
-    end function PIOc_get_vara_float
+    end function PIOc_get_vara_real
  end interface
 
 CONTAINS
@@ -97,7 +97,7 @@ CONTAINS
     ierr = get_var1_id_{TYPE} (file%fh, varid, index, ival)
 
   end function get_var1_{TYPE}
-! TYPE int,real,double,short
+! TYPE int,real,double,short,int64
   integer function get_var1_id_{TYPE} (ncid,varid, index, ival) result(ierr)
     integer, intent(in) :: ncid
     integer, intent(in) :: varid, index(:)
@@ -181,7 +181,7 @@ CONTAINS
   end function get_var1_vdesc_{TYPE}
 
 
-! TYPE int,real,double,short
+! TYPE int,real,double,short,int64
 ! DIMS 1,2,3,4,5
 !>
 !! @public
@@ -294,7 +294,7 @@ CONTAINS
   end function Get_var_0d_text
 
 
-! TYPE int,real,double,short
+! TYPE int,real,double,short,int64
 ! DIMS 0
   integer function get_var_0d_{TYPE} (File,varid, ival) result(ierr)
     use iso_c_binding
@@ -304,7 +304,7 @@ CONTAINS
     {VTYPE}  :: aival(1)
 
 
-    ierr = PIOc_get_var_{NCTYPE} (File%fh, varid-1, aival)
+    ierr = PIOc_get_var_{TYPE} (File%fh, varid-1, aival)
     ival = aival(1)
 
   end function Get_var_0d_{TYPE}
@@ -337,17 +337,17 @@ CONTAINS
 
   end function get_var_text_internal
 
-! TYPE int,real,double,short
+! TYPE int,real,double,short,int64
   integer function get_var_{TYPE}_internal  (ncid,varid, ival) result(ierr)
     integer, intent(in) :: ncid
     integer, intent(in) :: varid
     {VTYPE}, intent(out), target :: ival(*)
 
-    ierr = PIOc_get_var_{NCTYPE} (ncid, varid-1, ival)
+    ierr = PIOc_get_var_{TYPE} (ncid, varid-1, ival)
 
   end function get_var_{TYPE}_internal
 
-! TYPE int,real,double,short
+! TYPE int,real,double,short,int64
   integer function get_vara_{TYPE}_internal  (ncid,varid, start, count, ival) result(ierr)
     use pio_nf, only : pio_inq_varndims
     integer, intent(in) :: ncid
@@ -368,7 +368,7 @@ CONTAINS
        ccount(i) = count(ndims-i+1)
     enddo
 
-    ierr = PIOc_get_vara_{NCTYPE} (ncid, varid-1, cstart, ccount, ival)
+    ierr = PIOc_get_vara_{TYPE} (ncid, varid-1, cstart, ccount, ival)
     deallocate(cstart, ccount)
 
   end function get_vara_{TYPE}_internal
@@ -399,7 +399,7 @@ CONTAINS
     deallocate(ccount, cstart)
   end function get_vara_text_internal
 
-! TYPE int,real,double,short
+! TYPE int,real,double,short,int64
 ! DIMS 1,2,3,4,5
   integer function get_var_{DIMS}d_{TYPE} (File,varid, ival) result(ierr)
     type (File_desc_t), intent(in) :: File

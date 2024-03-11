@@ -14,7 +14,7 @@
 !<
 
 module pionfatt_mod
-  use pio_kinds, only : r4, r8, i4, i2, pio_offset_kind
+  use pio_kinds, only : r4, r8, i8, i4, i2, pio_offset_kind
   use pio_types
   use pio_support, only : replace_c_null
   use iso_c_binding
@@ -80,9 +80,9 @@ module pionfatt_mod
   end interface
 
   interface
-     ! TYPE int,double,short
+     ! TYPE int,double,short,int64
      integer(C_INT) function PIOc_put_att_{TYPE} (ncid, varid, name, xtype, len, op) &
-          bind(C,name="PIOc_put_att_{TYPE}")
+          bind(C,name="PIOc_put_att_{NCTYPE}")
        use iso_c_binding
        integer(C_INT), value    :: ncid
        integer(C_INT), value    :: varid
@@ -93,9 +93,9 @@ module pionfatt_mod
      end function PIOc_put_att_{TYPE}
   end interface
   interface
-     ! TYPE int,double,short
+     ! TYPE int,double,short,int64
      integer(C_INT) function PIOc_get_att_{TYPE} (ncid, varid, name, op) &
-          bind(C,name="PIOc_get_att_{TYPE}")
+          bind(C,name="PIOc_get_att_{NCTYPE}")
        use iso_c_binding
        integer(C_INT), value         :: ncid
        integer(C_INT), value         :: varid
@@ -104,7 +104,7 @@ module pionfatt_mod
      end function PIOc_get_att_{TYPE}
   end interface
   interface
-     integer(C_INT) function PIOc_put_att_float (ncid, varid, name, xtype, len, op) &
+     integer(C_INT) function PIOc_put_att_real (ncid, varid, name, xtype, len, op) &
           bind(C,name="PIOc_put_att_float")
        use iso_c_binding
        integer(C_INT), value    :: ncid
@@ -113,17 +113,17 @@ module pionfatt_mod
        integer(C_INT), value    :: xtype
        integer(C_SIZE_T), value :: len
        real(C_FLOAT)            :: op
-     end function PIOc_put_att_float
+     end function PIOc_put_att_real
   end interface
   interface
-      integer(C_INT) function PIOc_get_att_float (ncid, varid, name, op) &
+      integer(C_INT) function PIOc_get_att_real (ncid, varid, name, op) &
           bind(C,name="PIOc_get_att_float")
        use iso_c_binding
        integer(C_INT), value         :: ncid
        integer(C_INT), value         :: varid
        character(C_CHAR)             :: name(*)
        real(C_FLOAT),        intent(out)   :: op
-     end function PIOc_get_att_float
+     end function PIOc_get_att_real
   end interface
   interface
      integer(C_INT) function PIOc_inq_var_fill (ncid, varid, no_fill, fillvalue) &
@@ -191,7 +191,7 @@ contains
     ierr = put_att_id_{TYPE} (File%fh,varid,name,value)
 
   end function put_att_vid_{TYPE}
-  ! TYPE int,real,double,short
+  ! TYPE int,real,double,short,int64
   integer function put_att_id_{TYPE} (ncid, varid, name, values) result(ierr)
     use iso_c_binding
     integer, intent(in) :: ncid
@@ -200,7 +200,7 @@ contains
     {VTYPE}, intent(in) :: values
 
 
-    ierr = PIOc_put_att_{NCTYPE} (ncid,varid-1,trim(name)//C_NULL_CHAR, PIO_{TYPE}, 1_C_SIZE_T, values)
+    ierr = PIOc_put_att_{TYPE} (ncid,varid-1,trim(name)//C_NULL_CHAR, PIO_{TYPE}, 1_C_SIZE_T, values)
 
   end function put_att_id_{TYPE}
   integer function put_att_id_text (ncid, varid, name, values) result(ierr)
@@ -279,7 +279,7 @@ contains
   end function get_att_id_text
 
   !pl The next line is needed by genf90.pl, do not remove it.
-  ! TYPE real,double,int,short
+  ! TYPE real,double,int,short,int64
   !>
   !! @public
   !! @ingroup PIO_put_att
@@ -303,7 +303,7 @@ contains
 
   end function put_att_1d_id_{TYPE}
 
-  ! TYPE real,double,int,short
+  ! TYPE real,double,int,short,int64
   integer function put_att_1d_id_internal_{TYPE} (ncid, varid, name, len, values) result(ierr)
     integer, intent(in) :: ncid
     integer, intent(in) :: varid
@@ -312,7 +312,7 @@ contains
     {VTYPE}, intent(in), target :: values(*)
 
 
-    ierr = PIOc_put_att_{NCTYPE} (ncid, varid-1, trim(name)//C_NULL_CHAR, PIO_{TYPE} , len, values(1))
+    ierr = PIOc_put_att_{TYPE} (ncid, varid-1, trim(name)//C_NULL_CHAR, PIO_{TYPE} , len, values(1))
 
   end function put_att_1d_id_internal_{TYPE}
 
@@ -409,7 +409,7 @@ contains
   !! @param values : The value for the netcdf attribute
   !! @retval ierr @copydoc error_return
   !<
-  ! TYPE int,real,double,short
+  ! TYPE int,real,double,short,int64
   integer function get_att_id_{TYPE} (ncid, varid, name, values) result(ierr)
     use iso_c_binding
     integer, intent(in) :: ncid
@@ -418,7 +418,7 @@ contains
     {VTYPE}, intent(out), target :: values
 
 
-    ierr = PIOc_get_att_{NCTYPE} (ncid,varid-1,trim(name)//C_NULL_CHAR, values)
+    ierr = PIOc_get_att_{TYPE} (ncid,varid-1,trim(name)//C_NULL_CHAR, values)
 
   end function get_att_id_{TYPE}
 
@@ -466,7 +466,7 @@ contains
     character(len=*), intent(in)   :: name
     {VTYPE}, intent(out) , target         :: values(*)
 
-    ierr = PIOc_get_att_{NCTYPE} (ncid, varid-1, trim(name)//C_NULL_CHAR, values(1))
+    ierr = PIOc_get_att_{TYPE} (ncid, varid-1, trim(name)//C_NULL_CHAR, values(1))
 
 
   end function get_att_1d_id_{TYPE}

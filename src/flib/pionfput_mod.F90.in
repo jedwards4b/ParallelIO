@@ -15,7 +15,7 @@ module pionfput_mod
   use perf_mod, only : t_startf, t_stopf      ! _EXTERNAL
 #endif
   use iso_c_binding
-  use pio_kinds, only: i2,i4,r4,r8
+  use pio_kinds, only: i2,i4,i8,r4,r8
   use pio_types, only : file_desc_t, var_desc_t, pio_noerr
 
   implicit none
@@ -32,7 +32,7 @@ module pionfput_mod
      module procedure put_var1_{TYPE}, put_var1_vdesc_{TYPE}
   end interface
   interface
-     !TYPE text,int,double,short
+     !TYPE text,int,double,short,int64
      integer(C_INT) function PIOc_put_var_{TYPE}(ncid, varid, op) &
           bind(C,name="PIOc_put_var_{TYPE}")
        use iso_c_binding
@@ -42,9 +42,9 @@ module pionfput_mod
      end function PIOc_put_var_{TYPE}
   end interface
   interface
-     ! TYPE text,int,double,short
+     ! TYPE text,int,double,short,int64
      integer(C_INT) function PIOc_put_vara_{TYPE}(ncid, varid, start, count, op) &
-          bind(C,name="PIOc_put_vara_{TYPE}")
+          bind(C,name="PIOc_put_vara_{NCTYPE}")
        use iso_c_binding
        integer(C_INT), intent(in), value :: ncid
        integer(C_INT), intent(in), value :: varid
@@ -54,7 +54,7 @@ module pionfput_mod
      end function PIOc_put_vara_{TYPE}
   end interface
   interface
-     integer(C_INT) function PIOc_put_vara_float(ncid, varid, start, count, op) &
+     integer(C_INT) function PIOc_put_vara_real(ncid, varid, start, count, op) &
           bind(C,name="PIOc_put_vara_float")
        use iso_c_binding
        integer(C_INT), intent(in), value :: ncid
@@ -62,7 +62,7 @@ module pionfput_mod
        integer(C_SIZE_T), intent(in) :: start(*)
        integer(C_SIZE_T), intent(in) :: count(*)
        real(C_FLOAT)   , intent(in) :: op(*)
-     end function PIOc_put_vara_float
+     end function PIOc_put_vara_real
   end interface
 
 contains
@@ -94,7 +94,7 @@ contains
 
     deallocate(count)
   end function put_var1_text
-! TYPE int,real,double,short
+! TYPE int,double,short,int64
 !>
 !! @public
 !! @ingroup PIO_put_var
@@ -113,14 +113,14 @@ contains
     integer :: clen, i
     integer(C_SIZE_T), allocatable :: cindex(:)
     interface
-       integer(C_INT) function PIOc_put_var1_{NCTYPE}(ncid, varid, index, op) &
+       integer(C_INT) function PIOc_put_var1_{TYPE}(ncid, varid, index, op) &
             bind(C,name="PIOc_put_var1_{NCTYPE}")
          use iso_c_binding
          integer(C_INT), intent(in), value :: ncid
          integer(C_INT), intent(in), value :: varid
          integer(C_SIZE_T), intent(in) :: index(*)
          {CTYPE} :: op
-       end function PIOc_put_var1_{NCTYPE}
+       end function PIOc_put_var1_{TYPE}
     end interface
 
 #ifdef TIMING
@@ -132,12 +132,55 @@ contains
        cindex(i) = index(clen-i+1)-1
     enddo
 
-    ierr = PIOc_put_var1_{NCTYPE} (file%fh, varid-1, cindex, ival)
+    ierr = PIOc_put_var1_{TYPE} (file%fh, varid-1, cindex, ival)
     deallocate(cindex)
 #ifdef TIMING
     call t_stopf("PIO:put_var1_{TYPE}")
 #endif
   end function put_var1_{TYPE}
+!>
+!! @public
+!! @ingroup PIO_put_var
+!! @brief Write one element of data to a netCDF variable.
+!! @details
+!! @param File @copydoc file_desc_t
+!! @param varid : The netcdf variable identifier
+!! @param index :
+!! @param ival : The value for the netcdf metadata
+!! @retval ierr @copydoc error_return
+!<
+  integer function put_var1_real (File,varid, index, ival) result(ierr)
+    type (File_desc_t), intent(inout) :: File
+    integer, intent(in) :: varid, index(:)
+    real(r4), intent(in) :: ival
+    integer :: clen, i
+    integer(C_SIZE_T), allocatable :: cindex(:)
+    interface
+       integer(C_INT) function PIOc_put_var1_float(ncid, varid, index, op) &
+            bind(C,name="PIOc_put_var1_float")
+         use iso_c_binding
+         integer(C_INT), intent(in), value :: ncid
+         integer(C_INT), intent(in), value :: varid
+         integer(C_SIZE_T), intent(in) :: index(*)
+         real(C_FLOAT):: op
+       end function PIOc_put_var1_float
+    end interface
+
+#ifdef TIMING
+    call t_startf("PIO:put_var1_real")
+#endif
+    clen = size(index)
+    allocate(cindex(clen))
+    do i=1,clen
+       cindex(i) = index(clen-i+1)-1
+    enddo
+
+    ierr = PIOc_put_var1_float (file%fh, varid-1, cindex, ival)
+    deallocate(cindex)
+#ifdef TIMING
+    call t_stopf("PIO:put_var1_real")
+#endif
+  end function put_var1_real
 
 !>
 !! @public
@@ -226,7 +269,7 @@ contains
   end function put_var_{DIMS}d_text
 
 ! DIMS 1,2,3,4,5
-! TYPE int,real,double,short
+! TYPE int,real,double,short,int64
 !>
 !! @public
 !! @ingroup PIO_put_var
@@ -258,7 +301,7 @@ contains
   end function put_var_internal_{TYPE}
 
 ! DIMS 1,2,3,4,5
-! TYPE int,real,double,short
+! TYPE int,real,double,short,int64
 !>
 !! @public
 !! @ingroup PIO_put_var
@@ -283,7 +326,7 @@ contains
 
   end function put_var_{DIMS}d_{TYPE}
 
-! TYPE int,real,double,short
+! TYPE int,real,double,short,int64
 !>
 !! @public
 !! @ingroup PIO_put_var
@@ -311,7 +354,7 @@ contains
   end function put_var_0d_{TYPE}
 
 
-!! TYPE int,real,double,short
+!! TYPE int,real,double,short,int64
   integer function put_vara_internal_{TYPE} (ncid,varid,start,count, ival) result(ierr)
     integer, intent(in) :: ncid
     integer, intent(in) :: varid
@@ -335,7 +378,7 @@ contains
        cstart(i) = start(ndims-i+1)-1
        ccount(i) = count(ndims-i+1)
     enddo
-    ierr=PIOc_put_vara_{NCTYPE} (ncid, varid-1, cstart, ccount, ival)
+    ierr=PIOc_put_vara_{TYPE} (ncid, varid-1, cstart, ccount, ival)
     deallocate(cstart,ccount)
 
   end function put_vara_internal_{TYPE}
@@ -507,7 +550,7 @@ contains
 
   end subroutine Fstring2Cstring_{DIMS}d
 
-! TYPE int,real,double,short
+! TYPE int,real,double,short,int64
 ! DIMS 1,2,3,4,5
 !>
 !! @public

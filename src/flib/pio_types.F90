@@ -130,6 +130,7 @@ module pio_types
   integer, public, parameter :: PIO_num_OST =  16      !< num ost
   integer, public, parameter :: PIO_global = 0         !< global atts
   integer, public, parameter :: PIO_unlimited = 0      !< unlimited dimension
+  integer, public, parameter :: PIO_int64  = 7         !< 8-byte integer
   integer, public, parameter :: PIO_double = 6         !< double type
   integer, public, parameter :: PIO_real   = 5         !< real type
   integer, public, parameter :: PIO_int    = 4         !< int type
