@@ -28,11 +28,31 @@ set (src topology.c pio_file.c pioc_support.c pio_lists.c
 if (NETCDF_INTEGRATION)
   set (src ${src} ../ncint/nc_get_vard.c ../ncint/ncintdispatch.c ../ncint/ncint_pio.c ../ncint/nc_put_vard.c)
 endif ()
-
-add_library (pioc ${src})
-
+add_library (piocobj OBJECT ${src})
 # Always use -fPIC
-set_property(TARGET pioc PROPERTY POSITION_INDEPENDENT_CODE ON)
+set_property(TARGET piocobj PROPERTY POSITION_INDEPENDENT_CODE ON)
+
+# Include the clib source directory
+target_include_directories (piocobj
+  PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
+# Include the ncint source directory
+target_include_directories (piocobj
+  PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../ncint)
+
+# System and compiler CPP directives
+target_compile_definitions (piocobj
+  PUBLIC ${CMAKE_SYSTEM_DIRECTIVE})
+target_compile_definitions (piocobj
+  PUBLIC ${CMAKE_C_COMPILER_DIRECTIVE})
+
+
+add_library (piocSTATIC STATIC $<TARGET_OBJECTS:piocobj>)
+if (BUILD_SHARED_LIBS)
+  add_library (piocSHARED SHARED $<TARGET_OBJECTS:piocobj>)
+  set_target_properties(piocSHARED PROPERTIES OUTPUT_NAME pioc)
+endif()
+set_target_properties(piocSTATIC PROPERTIES OUTPUT_NAME pioc)
 
 set_source_files_properties(
     pioc_async.c
@@ -47,19 +67,6 @@ include_directories(
   "${PROJECT_SOURCE_DIR}"   # to find foo/foo.h
   "${PROJECT_BINARY_DIR}")  # to find foo/config.h
 
-# Include the clib source directory
-target_include_directories (pioc
-  PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-
-# Include the ncint source directory
-target_include_directories (pioc
-  PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../ncint)
-
-# System and compiler CPP directives
-target_compile_definitions (pioc
-  PUBLIC ${CMAKE_SYSTEM_DIRECTIVE})
-target_compile_definitions (pioc
-  PUBLIC ${CMAKE_C_COMPILER_DIRECTIVE})
 
 # Compiler-specific compiler options
 if ("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU")
@@ -77,7 +84,7 @@ endif()
 #==============================================================================
 
 # Library
-install (TARGETS pioc DESTINATION lib)
+install (TARGETS piocobj DESTINATION lib)
 
 # Include/Header Files
 install (FILES pio.h uthash.h DESTINATION include)
@@ -87,11 +94,11 @@ install (FILES pio.h uthash.h DESTINATION include)
 #==============================================================================
 # MPI test done at top level
 if (MPISERIAL_C_FOUND)
-    target_compile_definitions (pioc
+    target_compile_definitions (piocobj
       PRIVATE MPI_SERIAL)
-    target_include_directories (pioc
+    target_include_directories (piocobj
       PUBLIC ${MPISERIAL_C_INCLUDE_DIRS})
-    target_link_libraries (pioc
+    target_link_libraries (piocobj
       PUBLIC ${MPISERIAL_C_LIBRARIES})
     set (WITH_PNETCDF FALSE)
 endif ()
@@ -102,37 +109,39 @@ endif ()
 if (PIO_ENABLE_TIMING)
   if (GPTL_C_FOUND)
     message (STATUS "Found GPTL C: ${GPTL_C_LIBRARIES}")
-    target_include_directories (pioc
+    target_include_directories (piocobj
       PUBLIC ${GPTL_C_INCLUDE_DIRS})
-    target_link_libraries (pioc
+    target_link_libraries (piocobj
       PUBLIC ${GPTL_C_LIBRARIES})
   else ()
     message (STATUS "Using internal GPTL C library for timing")
-    target_link_libraries (pioc
+    target_include_directories (piocobj PUBLIC "${PROJECT_SOURCE_DIR}/../gptl")
+    
+    target_link_libraries (piocobj
       PUBLIC gptl)
   endif ()
-  target_compile_definitions (pioc
+  target_compile_definitions (piocobj
     PUBLIC TIMING)
 endif ()
 
 #===== NetCDF-C =====
 if (NetCDF_C_FOUND)
-  target_include_directories (pioc
+  target_include_directories (piocobj
     PUBLIC ${NetCDF_C_INCLUDE_DIRS})
-  target_link_libraries (pioc
+  target_link_libraries (piocobj
     PUBLIC ${NetCDF_C_LIBRARIES})
   if (${NetCDF_C_LOGGING_ENABLED})
     # netcdf.h needs this to be defined to use netCDF logging.
-    target_compile_definitions (pioc
+    target_compile_definitions (piocobj
       PUBLIC LOGGING)
   endif()
 endif ()
 
 #===== PnetCDF-C =====
 if (PnetCDF_C_FOUND)
-  target_include_directories (pioc
+  target_include_directories (piocobj
     PUBLIC ${PnetCDF_C_INCLUDE_DIRS})
-  target_link_libraries (pioc
+  target_link_libraries (piocobj
     PUBLIC ${PnetCDF_C_LIBRARIES})
 
   # Check library for varn functions
@@ -140,16 +149,16 @@ if (PnetCDF_C_FOUND)
 endif ()
 
 #===== Add EXTRAs =====
-target_include_directories (pioc
+target_include_directories (piocobj
   PUBLIC ${PIO_C_EXTRA_INCLUDE_DIRS})
-target_link_libraries (pioc
+target_link_libraries (piocobj
   PUBLIC ${PIO_C_EXTRA_LIBRARIES})
-target_compile_options (pioc
+target_compile_options (piocobj
   PRIVATE ${PIO_C_EXTRA_COMPILE_OPTIONS})
-target_compile_definitions (pioc
+target_compile_definitions (piocobj
   PUBLIC ${PIO_C_EXTRA_COMPILE_DEFINITIONS})
 if (PIO_C_EXTRA_LINK_FLAGS)
-  set_target_properties(pioc PROPERTIES
+  set_target_properties(piocobj PROPERTIES
     LINK_FLAGS ${PIO_C_EXTRA_LINK_FLAGS})
 endif ()
 
@@ -161,11 +170,11 @@ endif ()
 #===== MPI =====
 if (PIO_USE_MPISERIAL)
   if (MPISERIAL_C_FOUND)
-    target_compile_definitions (pioc
+    target_compile_definitions (piocobj
       PRIVATE _MPISERIAL)
-    target_include_directories (pioc
+    target_include_directories (piocobj
       PUBLIC ${MPISERIAL_C_INCLUDE_DIRS})
-    target_link_libraries (pioc
+    target_link_libraries (piocobj
       PUBLIC ${MPISERIAL_C_LIBRARIES})
 
     set (WITH_PNETCDF FALSE)
@@ -181,8 +190,8 @@ if (NOT ${SIZEOF_SIZE_T} EQUAL ${SIZEOF_LONG_LONG})
 endif ()
 
 set(CFLAGS "${CMAKE_C_FLAGS} ${CMAKE_C_FLAGS_${CMAKE_BUILD_TYPE}}" PARENT_SCOPE)
-get_target_property(cppdefs pioc COMPILE_DEFINITIONS)
-get_target_property(includes pioc INCLUDE_DIRECTORIES)
+get_target_property(cppdefs piocobj COMPILE_DEFINITIONS)
+get_target_property(includes piocobj INCLUDE_DIRECTORIES)
 foreach(x IN LISTS cppdefs)
   string(APPEND CPPFLAGS " -D${x}")
 endforeach()

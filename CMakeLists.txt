@@ -290,9 +290,9 @@ add_subdirectory (src)
 # Custom "piotests" target (builds the test executables)
 add_custom_target (tests)
 if (PIO_ENABLE_FORTRAN)
-  add_dependencies (tests pioc piof)
+  add_dependencies (tests piocobj piofobj)
 else()
-  add_dependencies (tests pioc)
+  add_dependencies (tests piocobj)
 endif()
 
 # Custom "check" target that depends upon "tests"
@@ -450,7 +450,8 @@ SET(FC_VERSION "${CMAKE_Fortran_COMPILER_ID} ${CMAKE_Fortran_COMPILER_VERSION}")
 # Build *FLAGS for libpio.settings.  (CFLAGS, CPPFLAGS, FFLAGS promoted from src)
 SET(LDFLAGS "${CMAKE_EXE_LINKER_FLAGS} ${CMAKE_EXE_LINKER_FLAGS_${CMAKE_BUILD_TYPE}}")
 
-is_disabled(BUILD_SHARED_LIBS enable_static)
+# always build static libraries
+SET(enable_static yes)
 is_enabled(BUILD_SHARED_LIBS enable_shared)
 is_enabled(HAVE_PAR_FILTERS have_par_filters)
 is_enabled(USE_SZIP HAS_SZIP_WRITE)

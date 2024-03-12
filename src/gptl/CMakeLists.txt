@@ -24,25 +24,35 @@ set (GPTL_Fortran_SRCS perf_mod.F90
 set (GPTL_Fortran_MODS ${CMAKE_CURRENT_BINARY_DIR}/perf_mod.mod
   ${CMAKE_CURRENT_BINARY_DIR}/perf_utils.mod)
 
-add_library (gptl ${GPTL_Fortran_SRCS} ${GPTL_C_SRCS})
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-target_include_directories (gptl
+add_library (gptlobj OBJECT ${GPTL_Fortran_SRCS} ${GPTL_C_SRCS}) 
+
+target_include_directories (gptlobj
   PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
   PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
 
-target_compile_definitions (gptl
+target_compile_definitions (gptlobj
   PUBLIC INCLUDE_CMAKE_FCI)
 
 if (CMAKE_SYSTEM_NAME MATCHES "AIX")
-  target_compile_definitions (gptl
+  target_compile_definitions (gptlobj
     PUBLIC _AIX)
 else ()
-  target_compile_definitions (gptl
+  target_compile_definitions (gptlobj
     PUBLIC ${CMAKE_SYSTEM_DIRECTIVE})
 endif ()
 
-target_compile_definitions (gptl
+target_compile_definitions (gptlobj
   PUBLIC ${CMAKE_Fortran_COMPILER_DIRECTIVE})
+
+add_library(gptlSTATIC STATIC $<TARGET_OBJECTS:gptlobj>)
+if (BUILD_SHARED_LIBS)
+  add_library(gptlSHARED SHARED $<TARGET_OBJECTS:gptlobj>)
+  set_target_properties(gptlSHARED PROPERTIES OUTPUT_NAME gptl)
+endif()
+set_target_properties(gptlSTATIC PROPERTIES OUTPUT_NAME gptl)
+
 
 if (CMAKE_Fortran_COMPILER_ID STREQUAL "NAG")
   set ( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -mismatch_all" )
@@ -55,7 +65,8 @@ endif ()
 #==============================================================================
 
 # Library
-install (TARGETS gptl DESTINATION lib)
+install (TARGETS gptlSTATIC DESTINATION lib)
+install (TARGETS gptlSHARED DESTINATION lib)
 
 # Header/Include File
 install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/gptl.h DESTINATION include)
@@ -96,12 +107,12 @@ endif ()
 #===== MPI =====
 if (PIO_USE_MPISERIAL)
   if (MPISERIAL_C_FOUND AND MPISERIAL_Fortran_FOUND)
-    target_compile_definitions (gptl
+    target_compile_definitions (gptlobj
       PRIVATE HAVE_MPI)
-    target_include_directories (gptl
+    target_include_directories (gptlobj
       PUBLIC ${MPISERIAL_C_INCLUDE_DIRS}
       PUBLIC ${MPISERIAL_Fortran_INCLUDE_DIRS})
-    target_link_libraries (gptl
+    target_link_libraries (gptlobj
       PUBLIC ${MPISERIAL_C_LIBRARIES}
       PUBLIC ${MPISERIAL_Fortran_LIBRARIES})
 
@@ -110,7 +121,7 @@ if (PIO_USE_MPISERIAL)
   endif ()
 else()
   if (MPI_C_FOUND AND MPI_Fortran_FOUND)
-    target_compile_definitions (gptl
+    target_compile_definitions (gptlobj
       PUBLIC HAVE_MPI)
   endif ()
 endif ()
@@ -119,7 +130,7 @@ endif ()
 set (CMAKE_REQUIRED_LIBRARIES ${MPI_C_LIBRARIES})
 check_function_exists (MPI_Comm_f2c MPI_HAS_COMM_F2C)
 if (NOT MPI_HAS_COMM_F2C)
-  target_compile_definitions(gptl
+  target_compile_definitions(gptlobj
     PRIVATE NO_COMM_F2C)
 endif ()
 
@@ -142,11 +153,11 @@ endif ()
 
 #===== GetTimeOfDay =====
 if (NOT DEFINED SYSTEM_HAS_GETTIMEOFDAY)
-  get_target_property (GPTL_LINK_LIBRARIES gptl LINK_LIBRARIES)
+  get_target_property (GPTL_LINK_LIBRARIES gptlobj LINK_LIBRARIES)
   set (CMAKE_REQUIRED_LIBRARIES ${GPTL_LINK_LIBRARIES})
   check_function_exists (gettimeofday GETTIMEOFDAY)
   if (NOT GETTIMEOFDAY)
-    target_compile_definitions(gptl
+    target_compile_definitions(gptlobj
       PUBLIC NO_GETTIMEOFDAY)
   endif ()
   set (SYSTEM_HAS_GETTIMEOFDAY ${GETTIMEOFDAY}

@@ -38,39 +38,50 @@ endif ()
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-add_library (piof ${PIO_Fortran_SRCS} ${PIO_GenF90_SRCS})
-# Always use -fPIC
-set_property(TARGET piof PROPERTY POSITION_INDEPENDENT_CODE ON)
+add_library(piofobj OBJECT ${PIO_Fortran_SRCS} ${PIO_GenF90_SRCS})
 
+# Always use -fPIC
+set_property(TARGET piofobj PROPERTY POSITION_INDEPENDENT_CODE ON)
 if (NOT PIO_ENABLE_FORTRAN)
-  set_target_properties(piof PROPERTIES EXCLUDE_FROM_ALL TRUE)
+  set_target_properties(piofobj PROPERTIES EXCLUDE_FROM_ALL TRUE)
 endif ()
 
-# Include flib source and binary directories (for Fortran modules)
-target_include_directories (piof
-  PUBLIC ${CMAKE_BINARY_DIR}
-  PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
-  PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
-
 # System and compiler CPP directives
-target_compile_definitions (piof
+target_compile_definitions (piofobj
   PUBLIC ${CMAKE_SYSTEM_DIRECTIVE})
-target_compile_definitions (piof
+target_compile_definitions (piofobj
   PUBLIC ${CMAKE_Fortran_COMPILER_DIRECTIVE})
 
 # Compiler-specific compile options
 if ("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "GNU")
-  target_compile_options (piof
+  target_compile_options (piofobj
     PRIVATE -ffree-line-length-none)
 elseif (CMAKE_Fortran_COMPILER_ID STREQUAL "NAG")
   set ( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -mismatch_all " )
-  #    target_compile_options (piof
+  #    target_compile_options (piofobj
   #        PRIVATE -mismatch_all)
 elseif (CMAKE_Fortran_COMPILER_ID STREQUAL "Cray")
   set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -ef")
 elseif (CMAKE_Fortran_COMPILER_ID STREQUAL "Intel")
   set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -debug minimal")
 endif()
+
+add_library (piofSTATIC STATIC $<TARGET_OBJECTS:piofobj>)
+if (BUILD_SHARED_LIBS)
+  add_library (piofSHARED SHARED $<TARGET_OBJECTS:piofobj>)
+  set_target_properties(piofSHARED PROPERTIES OUTPUT_NAME piof)
+  # Include flib source and binary directories (for Fortran modules)
+endif()
+# Include flib source and binary directories (for Fortran modules)
+target_include_directories (piofobj
+  PUBLIC ${CMAKE_BINARY_DIR}
+  PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
+  PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
+
+
+
+set_target_properties(piofSTATIC PROPERTIES OUTPUT_NAME piof)
+
 if (CMAKE_BUILD_TYPE STREQUAL "DEBUG")
      set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -g")
 endif()
@@ -105,7 +116,10 @@ endif ()
 #==============================================================================
 
 # Library
-install (TARGETS piof DESTINATION lib)
+if (BUILD_SHARED_LIBS)
+  install (TARGETS piofSHARED DESTINATION lib)
+endif()
+install (TARGETS piofSTATIC DESTINATION lib)
 
 # Fortran Modules
 install (FILES ${PIO_Fortran_MODS} DESTINATION include)
@@ -115,8 +129,7 @@ install (FILES ${PIO_Fortran_MODS} DESTINATION include)
 #==============================================================================
 
 #===== pioc =====
-target_link_libraries(piof
-  PUBLIC pioc)
+target_link_libraries(piofobj PUBLIC pioc)
 
 #===== genf90 =====
 if (DEFINED GENF90_PATH)
@@ -126,7 +139,7 @@ else ()
   ExternalProject_Add (genf90
     PREFIX ${CMAKE_CURRENT_BINARY_DIR}/genf90
     GIT_REPOSITORY https://github.com/PARALLELIO/genf90
-    GIT_TAG genf90_200608
+    GIT_TAG genf90_240311
     UPDATE_COMMAND ""
     CONFIGURE_COMMAND ""
     BUILD_COMMAND ""
@@ -135,7 +148,7 @@ else ()
   set (GENF90_PATH ${SOURCE_DIR})
   unset (SOURCE_DIR)
 endif ()
-add_dependencies (piof genf90)
+add_dependencies (piofobj genf90)
 
 #===== Fortran Source Generation with GenF90 =====
 foreach (SRC_FILE IN LISTS PIO_GenF90_SRCS)
@@ -148,11 +161,11 @@ endforeach ()
 #===== MPI =====
 if (PIO_USE_MPISERIAL)
   if (MPISERIAL_Fortran_FOUND)
-    target_compile_definitions (piof
+    target_compile_definitions (piofobj
       PRIVATE _MPISERIAL)
-    target_include_directories (piof
+    target_include_directories (piofobj
       PUBLIC ${MPISERIAL_Fortran_INCLUDE_DIRS})
-    target_link_libraries (piof
+    target_link_libraries (piofobj
       PUBLIC ${MPISERIAL_Fortran_LIBRARIES})
 
     set (WITH_PNETCDF FALSE)
@@ -207,30 +220,30 @@ endif ()
 if (PIO_ENABLE_TIMING)
   if (GPTL_Fortran_Perf_FOUND)
     message (STATUS "Found GPTL Fortran Perf: ${GPTL_Fortran_Perf_LIBRARIES}")
-    target_include_directories (piof
+    target_include_directories (piofobj
       PUBLIC ${GPTL_Fortran_INCLUDE_DIRS})
-    target_link_libraries (piof
+    target_link_libraries (piofobj
       PUBLIC ${GPTL_Fortran_LIBRARIES})
   else ()
     message (STATUS "Using internal GPTL Fortran library for timing")
-    target_link_libraries (piof
+    target_link_libraries (piofobj
       PUBLIC gptl)
   endif ()
 endif ()
 
 #===== NetCDF-Fortran =====
 if (NetCDF_Fortran_FOUND)
-  target_include_directories (piof
+  target_include_directories (piofobj
     PUBLIC ${NetCDF_Fortran_INCLUDE_DIRS})
-  target_link_libraries (piof
+  target_link_libraries (piofobj
     PUBLIC ${NetCDF_Fortran_LIBRARIES})
 endif ()
 
 #===== PnetCDF =====
 if (PnetCDF_Fortran_FOUND)
-  target_include_directories (piof
+  target_include_directories (piofobj
     PUBLIC ${PnetCDF_Fortran_INCLUDE_DIRS})
-  target_link_libraries (piof
+  target_link_libraries (piofobj
     PUBLIC ${PnetCDF_Fortran_LIBRARIES})
 
   # Check library for varn functions
@@ -238,16 +251,16 @@ if (PnetCDF_Fortran_FOUND)
 endif ()
 
 #===== Add EXTRAs =====
-target_include_directories (piof
+target_include_directories (piofobj
   PUBLIC ${PIO_Fortran_EXTRA_INCLUDE_DIRS})
-target_link_libraries (piof
+target_link_libraries (piofobj
   PUBLIC ${PIO_Fortran_EXTRA_LIBRARIES})
-target_compile_options (piof
+target_compile_options (piofobj
   PRIVATE ${PIO_Fortran_EXTRA_COMPILE_OPTIONS})
-target_compile_definitions (piof
+target_compile_definitions (piofobj
   PUBLIC ${PIO_Fortran_EXTRA_COMPILE_DEFINITIONS})
 if (PIO_Fortran_EXTRA_LINK_FLAGS)
-  set_target_properties(piof PROPERTIES
+  set_target_properties(piofobj PROPERTIES
     LINK_FLAGS ${PIO_Fortran_EXTRA_LINK_FLAGS})
 endif ()
 
@@ -256,8 +269,8 @@ if (NOT PnetCDF_Fortran_FOUND AND NOT NetCDF_Fortran_FOUND)
   message (FATAL_ERROR "Must have PnetCDF and/or NetCDF Fortran libraries")
 endif ()
 set(FFLAGS ${CMAKE_Fortran_FLAGS} PARENT_SCOPE)
-get_target_property(fppdefs piof COMPILE_DEFINITIONS)
-get_target_property(fincludes piof INCLUDE_DIRECTORIES)
+get_target_property(fppdefs piofobj COMPILE_DEFINITIONS)
+get_target_property(fincludes piofobj INCLUDE_DIRECTORIES)
 foreach(x IN LISTS fppdefs)
   string(APPEND FPPFLAGS " -D${x}")
 endforeach()

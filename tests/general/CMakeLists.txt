@@ -60,7 +60,12 @@ endif()
 set (DEFAULT_TEST_TIMEOUT 600)
 
 add_library(pio_tutil util/pio_tutil.F90)
-target_link_libraries(pio_tutil piof pioc)
+target_link_libraries(pio_tutil piofSTATIC piocSTATIC gptlSTATIC)
+target_include_directories (pio_tutil
+  PUBLIC ${CMAKE_BINARY_DIR}
+  PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
+  PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/../../src/flib
+  PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
 
 #===== pio_init_finalize =====
 add_executable (pio_init_finalize EXCLUDE_FROM_ALL
