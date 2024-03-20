@@ -5,7 +5,7 @@
 # Ed Hartnett 8/19/20
 
 include (LibMPI)
-
+include (add_pio_executable)
 include_directories("${CMAKE_SOURCE_DIR}/tests/ncint")
 include_directories("${CMAKE_BINARY_DIR}")
 
@@ -20,9 +20,8 @@ else ()
 endif ()
 
 FOREACH(tst ${my_tests})
-  add_executable (${tst} EXCLUDE_FROM_ALL ${tst}.c)
+  add_pio_executable (${tst} ${tst}.c)
   add_dependencies (tests ${tst})
-  target_link_libraries (${tst} pioc)
   add_mpi_test(${tst}
     EXECUTABLE ${CMAKE_CURRENT_BINARY_DIR}/${tst}
     NUMPROCS 4
