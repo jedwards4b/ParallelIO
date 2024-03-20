@@ -1,3 +1,4 @@
+INCLUDE(add_pio_executable)
 ###-------------------------------------------------------------------------###
 ### CMakeList.txt for examples using pio
 ###-------------------------------------------------------------------------###
@@ -24,20 +25,16 @@ endif()
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -O0")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0")
 
-ADD_EXECUTABLE(examplePio EXCLUDE_FROM_ALL examplePio.c)
-TARGET_LINK_LIBRARIES(examplePio pioc)
+ADD_PIO_EXECUTABLE(examplePio examplePio.c)
 add_dependencies(tests examplePio)
 
-ADD_EXECUTABLE(piorcw piorcw.c)
-TARGET_LINK_LIBRARIES(piorcw pioc)
+ADD_PIO_EXECUTABLE(piorcw piorcw.c)
 add_dependencies(tests piorcw)
 
-ADD_EXECUTABLE(example1 example1.c)
-TARGET_LINK_LIBRARIES(example1 pioc)
+ADD_PIO_EXECUTABLE(example1 example1.c)
 add_dependencies(tests example1)
 
-ADD_EXECUTABLE(darray_no_async darray_no_async.c)
-TARGET_LINK_LIBRARIES(darray_no_async pioc)
+ADD_PIO_EXECUTABLE(darray_no_async darray_no_async.c)
 add_dependencies(tests darray_no_async)
 
 # ADD_EXECUTABLE(darray_async darray_async.c)
@@ -61,12 +58,11 @@ find_package (MPE "2.4.8" COMPONENTS C)
 if (PIO_ENABLE_FORTRAN)
   if (MPE_C_FOUND)
     SET(SRC example2.c)
-    ADD_EXECUTABLE(example2 ${SRC})
-    TARGET_LINK_LIBRARIES(example2 pioc)
+    ADD_PIO_EXECUTABLE(example2 ${SRC})
     target_include_directories (example2
       PUBLIC ${MPE_C_INCLUDE_DIRS})
     target_compile_definitions (example2
       PUBLIC HAVE_MPE)
-    target_link_libraries (example2 pioc lmpe mpe pthread m)
+    target_link_libraries (example2 piocSTATIC lmpe mpe pthread m)
   endif ()
 endif ()

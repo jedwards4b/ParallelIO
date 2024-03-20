@@ -148,7 +148,7 @@ if (${MPI_HAS_Fortran_MOD})
   message (STATUS "MPI Fortran module verified and enabled.")
 else ()
   message (STATUS "MPI Fortran module failed verification and therefore disabled.")
-  target_compile_definitions (gptl
+  target_compile_definitions (gptlSTATIC
     PUBLIC NO_MPIMOD)
 endif ()
 
