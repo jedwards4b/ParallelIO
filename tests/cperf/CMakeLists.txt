@@ -28,9 +28,8 @@ endif()
 
 # Don't run these tests if we are using MPI SERIAL.
 if (NOT PIO_USE_MPISERIAL)
-  add_executable (piodecomptest EXCLUDE_FROM_ALL piodecomptest.c mpi_argp.c)
+  add_pio_executable (piodecomptest "piodecomptest.c;mpi_argp.c")
   add_dependencies (tests piodecomptest)
-  target_link_libraries (piodecomptest pioc)
 endif()
 
 # Test Timeout in seconds.

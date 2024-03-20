@@ -1,17 +1,22 @@
 #==============================================================================
 #  DEFINE THE TARGETS AND TESTS
 #==============================================================================
-
+include_directories(${PIO_INCLUDE_DIRS} "${CMAKE_BINARY_DIR}" "${CMAKE_SOURCE_DIR}/src/clib" "${CMAKE_BINARY_DIR}/src/gptl/" "${CMAKE_BINARY_DIR}/src/flib/")
 add_executable (pioperf EXCLUDE_FROM_ALL
   pioperformance.F90)
-target_link_libraries (pioperf piof)
-add_dependencies (tests pioperf)
+
+#target_link_libraries (pioperf PRIVATE piofSTATIC piocSTATIC )
+#target_link_libraries (pioperf PUBLIC "${NetCDF_C_LIBRARY}")
+#if (WITH_PNETCDF)
+#  target_link_libraries (pioperf PUBLIC "${PnetCDF_C_LIBRARY}")
+#endif()
+#if (PIO_ENABLE_TIMING)
+#  target_link_libraries (pioperf PRIVATE gptlSTATIC)
+#endif()
+#add_dependencies (tests pioperf)
 
 # Compiler-specific compile options
-if ("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "GNU")
-  target_compile_options (piof
-    PRIVATE -ffree-line-length-none)
-elseif (CMAKE_Fortran_COMPILER_ID STREQUAL "NAG")
+if (CMAKE_Fortran_COMPILER_ID STREQUAL "NAG")
   set ( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -mismatch_all " )
   #    target_compile_options (piof
   #        PRIVATE -mismatch_all)

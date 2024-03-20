@@ -84,8 +84,10 @@ endif()
 #==============================================================================
 
 # Library
-install (TARGETS piocobj DESTINATION lib)
-
+install (TARGETS piocSTATIC DESTINATION lib)
+if (BUILD_SHARED_LIBS)
+  install (TARGETS piocSHARED DESTINATION lib)
+endif()
 # Include/Header Files
 install (FILES pio.h uthash.h DESTINATION include)
 

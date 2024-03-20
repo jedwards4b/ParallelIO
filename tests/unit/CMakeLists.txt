@@ -2,8 +2,8 @@
 
 # Jim Edwards
 include (LibMPI)
-
-include_directories("${CMAKE_SOURCE_DIR}/tests/unit")
+include (add_pio_executable)
+include_directories("${CMAKE_SOURCE_DIR}/tests/unit ${CMAKE_BINARY_DIR}/tests/unit")
 
 #==============================================================================
 #  PREPARE FOR TESTING
@@ -23,8 +23,7 @@ set (SRCS basic_tests.F90
   global_vars.F90
   ncdf_tests.F90)
 
-add_executable (pio_unit_test EXCLUDE_FROM_ALL ${SRCS})
-target_link_libraries (pio_unit_test piof)
+add_pio_executable (pio_unit_test "${SRCS}")
 if ("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "GNU")
   target_compile_options (pio_unit_test
     PRIVATE -ffree-line-length-none)
@@ -39,8 +38,8 @@ endif ()
 add_dependencies (tests pio_unit_test)
 
 # Add ftst_vars.F90.
-add_executable (ftst_vars_chunking EXCLUDE_FROM_ALL ftst_vars_chunking.F90)
-target_link_libraries (ftst_vars_chunking piof)
+add_pio_executable (ftst_vars_chunking ftst_vars_chunking.F90)
+
 add_dependencies (tests ftst_vars_chunking)
 
 # Test Timeout in seconds.

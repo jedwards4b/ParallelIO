@@ -1,5 +1,5 @@
 include (LibMPI)
-
+include(add_pio_executable)
 #==============================================================================
 #  GENERATE TARGET SOURCES
 #==============================================================================
@@ -59,18 +59,15 @@ endif()
 # Test Timeout (4 min = 240 sec)
 set (DEFAULT_TEST_TIMEOUT 600)
 
-add_library(pio_tutil util/pio_tutil.F90)
-target_link_libraries(pio_tutil piofSTATIC piocSTATIC gptlSTATIC)
-target_include_directories (pio_tutil
-  PUBLIC ${CMAKE_BINARY_DIR}
-  PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
-  PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/../../src/flib
-  PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
+#add_library(pio_tutil util/pio_tutil.F90)
+#target_include_directories (pio_tutil
+#  PUBLIC ${CMAKE_BINARY_DIR}
+#  PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
+#  PUBLIC ${CMAKE_BINARY_DIR}/src/flib
+#  PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
 
 #===== pio_init_finalize =====
-add_executable (pio_init_finalize EXCLUDE_FROM_ALL
-  pio_init_finalize.F90)
-target_link_libraries (pio_init_finalize pio_tutil)
+add_pio_executable (pio_init_finalize "pio_init_finalize.F90;util/pio_tutil.F90")
 add_dependencies (tests pio_init_finalize)
 
 if (PIO_USE_MPISERIAL)
@@ -107,9 +104,7 @@ else ()
 endif ()
 
 #===== pio_file_fail =====
-add_executable (pio_file_fail EXCLUDE_FROM_ALL
-  pio_file_fail.F90)
-target_link_libraries (pio_file_fail pio_tutil)
+add_pio_executable (pio_file_fail "pio_file_fail.F90;util/pio_tutil.F90")
 if ("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "GNU")
   target_compile_options (pio_init_finalize
     PRIVATE -ffree-line-length-none)
@@ -129,9 +124,7 @@ else ()
 endif ()
 
 #===== pio_file_simple_tests =====
-add_executable (pio_file_simple_tests EXCLUDE_FROM_ALL
-  pio_file_simple_tests.F90)
-target_link_libraries (pio_file_simple_tests pio_tutil)
+add_pio_executable (pio_file_simple_tests "pio_file_simple_tests.F90;util/pio_tutil.F90")
 add_dependencies (tests pio_file_simple_tests)
 
 if (PIO_USE_MPISERIAL)
@@ -147,9 +140,7 @@ else ()
 endif ()
 
 #===== ncdf_simple_tests =====
-add_executable (ncdf_simple_tests EXCLUDE_FROM_ALL
-  ncdf_simple_tests.F90)
-target_link_libraries (ncdf_simple_tests pio_tutil)
+add_pio_executable (ncdf_simple_tests "ncdf_simple_tests.F90;util/pio_tutil.F90")
 add_dependencies (tests ncdf_simple_tests)
 
 if (PIO_USE_MPISERIAL)
@@ -165,9 +156,7 @@ else ()
 endif ()
 
 #===== ncdf_get_put =====
-add_executable (ncdf_get_put EXCLUDE_FROM_ALL
-  ncdf_get_put.F90)
-target_link_libraries (ncdf_get_put pio_tutil)
+add_pio_executable (ncdf_get_put "ncdf_get_put.F90;util/pio_tutil.F90")
 add_dependencies (tests ncdf_get_put)
 
 if (PIO_USE_MPISERIAL)
@@ -191,9 +180,7 @@ else ()
 endif ()
 
 #===== ncdf_fail =====
-add_executable (ncdf_fail EXCLUDE_FROM_ALL
-  ncdf_fail.F90)
-target_link_libraries (ncdf_fail pio_tutil)
+add_pio_executable (ncdf_fail "ncdf_fail.F90;util/pio_tutil.F90")
 add_dependencies (tests ncdf_fail)
 
 if (PIO_USE_MPISERIAL)
@@ -209,9 +196,7 @@ else ()
 endif ()
 
 #===== ncdf_inq =====
-add_executable (ncdf_inq EXCLUDE_FROM_ALL
-  ncdf_inq.F90)
-target_link_libraries (ncdf_inq pio_tutil)
+add_pio_executable (ncdf_inq "ncdf_inq.F90;util/pio_tutil.F90")
 add_dependencies (tests ncdf_inq)
 
 if (PIO_USE_MPISERIAL)
@@ -227,9 +212,7 @@ else ()
 endif ()
 
 #===== pio_rearr =====
-add_executable (pio_rearr EXCLUDE_FROM_ALL
-    pio_rearr.F90)
-target_link_libraries (pio_rearr pio_tutil)
+add_pio_executable (pio_rearr "pio_rearr.F90;util/pio_tutil.F90")
 add_dependencies (tests pio_rearr)
 
 if (PIO_USE_MPISERIAL)
@@ -245,9 +228,7 @@ else ()
 endif ()
 
 #===== pio_rearr_opts =====
-add_executable (pio_rearr_opts EXCLUDE_FROM_ALL
-    pio_rearr_opts.F90)
-target_link_libraries (pio_rearr_opts pio_tutil)
+add_pio_executable (pio_rearr_opts "pio_rearr_opts.F90;util/pio_tutil.F90")
 add_dependencies (tests pio_rearr_opts)
 
 if (PIO_USE_MPISERIAL)
@@ -265,9 +246,7 @@ endif ()
 set_tests_properties(pio_rearr_opts PROPERTIES LABELS "skipforspack")
 
 #===== pio_rearr_opts2 =====
-add_executable (pio_rearr_opts2 EXCLUDE_FROM_ALL
-    pio_rearr_opts2.F90)
-target_link_libraries (pio_rearr_opts2 pio_tutil)
+add_pio_executable (pio_rearr_opts2 "pio_rearr_opts2.F90;util/pio_tutil.F90")
 add_dependencies (tests pio_rearr_opts2)
 
 if (PIO_USE_MPISERIAL)
@@ -291,9 +270,7 @@ else ()
 endif ()
 
 #===== pio_decomp_tests =====
-add_executable (pio_decomp_tests EXCLUDE_FROM_ALL
-  pio_decomp_tests.F90)
-target_link_libraries (pio_decomp_tests pio_tutil)
+add_pio_executable (pio_decomp_tests "pio_decomp_tests.F90;util/pio_tutil.F90")
 add_dependencies (tests pio_decomp_tests)
 
 if (PIO_USE_MPISERIAL)
@@ -403,9 +380,7 @@ else ()
 endif ()
 
 #===== pio_decomp_tests_1d =====
-add_executable (pio_decomp_tests_1d EXCLUDE_FROM_ALL
-  pio_decomp_tests_1d.F90)
-target_link_libraries (pio_decomp_tests_1d pio_tutil)
+add_pio_executable (pio_decomp_tests_1d "pio_decomp_tests_1d.F90;util/pio_tutil.F90")
 add_dependencies (tests pio_decomp_tests_1d)
 
 if (PIO_USE_MPISERIAL)
@@ -515,15 +490,11 @@ else ()
 endif ()
 
 #===== pio_decomp_tests_2d =====
-add_executable (pio_decomp_tests_2d EXCLUDE_FROM_ALL
-  pio_decomp_tests_2d.F90)
-target_link_libraries (pio_decomp_tests_2d pio_tutil)
+add_pio_executable (pio_decomp_tests_2d "pio_decomp_tests_2d.F90;util/pio_tutil.F90")
 add_dependencies (tests pio_decomp_tests_2d)
 
 #===== pio_decomphalo_tests_2d =====
-add_executable (pio_decomphalo_tests_2d EXCLUDE_FROM_ALL
-  pio_decomphalo_tests_2d.F90)
-target_link_libraries (pio_decomphalo_tests_2d pio_tutil)
+add_pio_executable (pio_decomphalo_tests_2d "pio_decomphalo_tests_2d.F90;util/pio_tutil.F90")
 add_dependencies (tests pio_decomphalo_tests_2d)
 
 if (PIO_USE_MPISERIAL)
@@ -645,9 +616,7 @@ else ()
 endif ()
 
 #===== pio_decomp_tests_3d =====
-add_executable (pio_decomp_tests_3d EXCLUDE_FROM_ALL
-  pio_decomp_tests_3d.F90)
-target_link_libraries (pio_decomp_tests_3d pio_tutil)
+add_pio_executable (pio_decomp_tests_3d "pio_decomp_tests_3d.F90;util/pio_tutil.F90")
 add_dependencies (tests pio_decomp_tests_3d)
 
 if (PIO_USE_MPISERIAL)
@@ -757,9 +726,7 @@ else ()
 endif ()
 
 #===== pio_decomp_frame_tests =====
-add_executable (pio_decomp_frame_tests EXCLUDE_FROM_ALL
-  pio_decomp_frame_tests.F90)
-target_link_libraries (pio_decomp_frame_tests pio_tutil)
+add_pio_executable (pio_decomp_frame_tests "pio_decomp_frame_tests.F90;util/pio_tutil.F90")
 add_dependencies (tests pio_decomp_frame_tests)
 
 if (PIO_USE_MPISERIAL)
@@ -775,9 +742,7 @@ else ()
 endif ()
 
 #===== pio_decomp_fillval =====
-add_executable (pio_decomp_fillval EXCLUDE_FROM_ALL
-  pio_decomp_fillval.F90)
-target_link_libraries (pio_decomp_fillval pio_tutil)
+add_pio_executable (pio_decomp_fillval "pio_decomp_fillval.F90;util/pio_tutil.F90")
 add_dependencies (tests pio_decomp_fillval)
 
 if (PIO_USE_MPISERIAL)
@@ -793,9 +758,7 @@ else ()
 endif ()
 
 #===== pio_iosystems_test =====
-add_executable (pio_iosystem_tests EXCLUDE_FROM_ALL
-  pio_iosystem_tests.F90)
-target_link_libraries (pio_iosystem_tests pio_tutil)
+add_pio_executable (pio_iosystem_tests "pio_iosystem_tests.F90;util/pio_tutil.F90")
 add_dependencies (tests pio_iosystem_tests)
 
 if (PIO_USE_MPISERIAL)
@@ -810,9 +773,7 @@ else ()
     TIMEOUT ${DEFAULT_TEST_TIMEOUT})
 endif ()
 
-add_executable (pio_iosystem_async_tests EXCLUDE_FROM_ALL
-  pio_iosystem_async_tests.F90)
-target_link_libraries (pio_iosystem_async_tests pio_tutil)
+add_pio_executable (pio_iosystem_async_tests "pio_iosystem_async_tests.F90;util/pio_tutil.F90")
 add_dependencies (tests pio_iosystem_async_tests)
 
 if (NOT PIO_USE_MPISERIAL)
@@ -822,9 +783,7 @@ if (NOT PIO_USE_MPISERIAL)
     TIMEOUT ${DEFAULT_TEST_TIMEOUT})
 endif ()
 
-add_executable (pio_filter_tests EXCLUDE_FROM_ALL
-  pio_filter_tests.F90)
-target_link_libraries (pio_filter_tests pio_tutil)
+add_pio_executable (pio_filter_tests "pio_filter_tests.F90;util/pio_tutil.F90")
 add_dependencies (tests pio_filter_tests)
 
 if (NOT PIO_USE_MPISERIAL AND PIO_USE_PARALLEL_FILTERS)
@@ -837,9 +796,7 @@ endif ()
 
 
 #===== pio_iosystems_test2 =====
-add_executable (pio_iosystem_tests2 EXCLUDE_FROM_ALL
-  pio_iosystem_tests2.F90)
-target_link_libraries (pio_iosystem_tests2 pio_tutil)
+add_pio_executable (pio_iosystem_tests2 "pio_iosystem_tests2.F90;util/pio_tutil.F90")
 add_dependencies (tests pio_iosystem_tests2)
 
 if (PIO_USE_MPISERIAL)
@@ -855,9 +812,8 @@ else ()
 endif ()
 
 #===== pio_iosystems_test3 =====
-add_executable (pio_iosystem_tests3 EXCLUDE_FROM_ALL
-  pio_iosystem_tests3.F90)
-target_link_libraries (pio_iosystem_tests3 pio_tutil)
+add_pio_executable (pio_iosystem_tests3 "pio_iosystem_tests3.F90;util/pio_tutil.F90")
+
 add_dependencies (tests pio_iosystem_tests3)
 
 if (PIO_USE_MPISERIAL)

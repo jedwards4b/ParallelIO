@@ -456,9 +456,10 @@ pio_inq_var_fill_expected(int ncid, int varid, int pio_type, PIO_Offset type_siz
     unsigned int uint_fill_value = NC_FILL_UINT;
     long long int64_fill_value = NC_FILL_INT64;
     unsigned long long uint64_fill_value = NC_FILL_UINT64;
-    char *string_fill_value = "";
     int ret;
-
+#ifdef _NETCDF4
+    char *string_fill_value="";
+#endif
     /* Check inputs. */
     assert(fillvalue);
 

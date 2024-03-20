@@ -66,8 +66,9 @@ endif ()
 
 # Library
 install (TARGETS gptlSTATIC DESTINATION lib)
-install (TARGETS gptlSHARED DESTINATION lib)
-
+if (BUILD_SHARED_LIBS)
+  install (TARGETS gptlSHARED DESTINATION lib)
+endif()
 # Header/Include File
 install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/gptl.h DESTINATION include)
 

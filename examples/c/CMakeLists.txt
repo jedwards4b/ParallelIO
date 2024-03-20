@@ -3,8 +3,7 @@
 ###-------------------------------------------------------------------------###
 
 # Include PIO include and lib directories
-INCLUDE_DIRECTORIES(${PIO_INCLUDE_DIRS} "${CMAKE_BINARY_DIR}")
-include_directories("${CMAKE_SOURCE_DIR}/examples/c")
+include_directories(${PIO_INCLUDE_DIRS} "${CMAKE_SOURCE_DIR}/examples/c" "${CMAKE_BINARY_DIR}")
 LINK_DIRECTORIES(${PIO_LIB_DIR})
 
 set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -g -O0")
