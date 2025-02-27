@@ -71,7 +71,7 @@ int rcw_write_darray(int iosys, int rank)
     /* allocated in pioc_read_nc_decomp_int */
     free(full_map);
     ierr = PIOc_InitDecomp(iosys, PIO_DOUBLE, ndims, global_dimlen, maplen[rank],
-                           dofmap, &ioid, NULL, NULL, NULL);
+                           dofmap, &ioid, NULL, NULL, NULL, NULL);
 
     free(global_dimlen);
     double dsum=0;
@@ -165,7 +165,7 @@ int rcw_read_darray(int iosys,int rank)
     free(full_map);
 //    PIOc_set_log_level(3);
     ierr = PIOc_InitDecomp(iosys, pio_type, ndims, global_dimlen, maplen[rank],
-                           dofmap, &ioid, NULL, NULL, NULL);
+                           dofmap, &ioid, NULL, NULL, NULL, NULL);
     free(dofmap);
     free(global_dimlen);
     switch(pio_type)

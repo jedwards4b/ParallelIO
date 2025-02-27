@@ -289,25 +289,22 @@ create_mpi_datatypes(MPI_Datatype mpitype, int msgcnt,
 
     PIO_Offset bsizeT[msgcnt];
 
-    PLOG((2, "create_mpi_datatypes mpitype = %d msgcnt = %d", mpitype,
-          msgcnt));
-//    PLOG((2, "MPI_BYTE = %d MPI_CHAR = %d MPI_SHORT = %d MPI_INT = %d "
-//          "MPI_FLOAT = %d MPI_DOUBLE = %d", MPI_BYTE, MPI_CHAR, MPI_SHORT,
-//          MPI_INT, MPI_FLOAT, MPI_DOUBLE));
+    PLOG((2, "create_mpi_datatypes mpitype = %d msgcnt = %d", mpitype, msgcnt));
 
-    /* How many indicies in the array? */
-    for (int j = 0; j < msgcnt; j++){
+    /* Calculate the number of indices in the array. */
+    for (int j = 0; j < msgcnt; j++) {
         numinds += mcount[j];
     }
     PLOG((2, "numinds = %d", numinds));
 
-    if (mindex)
-    {
-      for(int j=0; j<numinds; j++)
-        PLOG((5,"mindex[%d] = %d",j,mindex[j]));
-      if (!(lindex = malloc(numinds * sizeof(PIO_Offset))))
+    if (mindex) {
+        for (int j = 0; j < numinds; j++) {
+            PLOG((5, "mindex[%d] = %d", j, mindex[j]));
+        }
+        if (!(lindex = calloc(numinds, sizeof(PIO_Offset)))) {
             return pio_err(NULL, NULL, PIO_ENOMEM, __FILE__, __LINE__);
-        memcpy(lindex, mindex, (size_t)(numinds * sizeof(PIO_Offset)));
+        }
+        memcpy(lindex, mindex, numinds * sizeof(PIO_Offset));
         PLOG((3, "allocated lindex, copied mindex"));
     }
 
@@ -316,91 +313,80 @@ create_mpi_datatypes(MPI_Datatype mpitype, int msgcnt,
     int pos = 0;
     int ii = 0;
 
-    /* Determine the blocksize. This is done differently for the
-     * rearrangers */
-    if(mfrom == NULL)
-    {
-        for (int i = 0; i < msgcnt; i++)
-        {
-            if (mcount[i] > 0)
-            {
-                /* Look for the largest block of data for io which
-                 * can be expressed in terms of start and
-                 * count. */
+    /* Determine the blocksize. This is done differently for the rearrangers. */
+    if (mfrom == NULL) {
+        for (int i = 0; i < msgcnt; i++) {
+            if (mcount[i] > 0) {
                 bsizeT[ii] = GCDblocksize(mcount[i], lindex + pos);
                 ii++;
                 pos += mcount[i];
             }
         }
         blocksize = (int)lgcd_array(ii, bsizeT);
-    }
-    else
-    {
+    } else {
         blocksize = 1;
     }
     PLOG((2, "blocksize = %d", blocksize));
 
-    /* pos is an index to the start of each message block. */
+    /* Initialize position to the start of each message block. */
     pos = 0;
-    for (int i = 0; i < msgcnt; i++)
-    {
-        if (mcount[i] > 0)
-        {
+    for (int i = 0; i < msgcnt; i++) {
+        if (mcount[i] > 0) {
             int len = mcount[i] / blocksize;
             int *displace;
 
-            if (!(displace = malloc(sizeof(int) * len)))
-                EXIT1(PIO_ENOMEM);
+            if (!(displace = malloc(len * sizeof(int)))) {
+                ret = pio_err(NULL, NULL, PIO_ENOMEM, __FILE__, __LINE__);
+                free(lindex);
+                return ret;
+            }
 
-            PLOG((3, "blocksize = %d i = %d mcount[%d] = %d len = %d", blocksize, i, i,
-                  mcount[i], len));
-            if (blocksize == 1)
-            {
-                if (!mfrom)
-                {
+            PLOG((3, "blocksize = %d i = %d mcount[%d] = %d len = %d", blocksize, i, i, mcount[i], len));
+            if (blocksize == 1) {
+                if (!mfrom) {
                     /* Box rearranger. */
-                    for (int j = 0; j < len; j++)
+                    for (int j = 0; j < len; j++) {
                         displace[j] = (int)(lindex[pos + j]);
-                }
-                else
-                {
+                    }
+                } else {
                     /* Subset rearranger. */
                     int k = 0;
-                    for (int j = 0; j < numinds; j++)
-                      if (mfrom[j] == i){
+                    for (int j = 0; j < numinds; j++) {
+                        if (mfrom[j] == i) {
                             displace[k++] = (int)(lindex[j]);
-                      }
+                        }
+                    }
+                }
+            } else {
+                for (int j = 0; j < mcount[i]; j++) {
+                    (lindex + pos)[j]++;
                 }
 
-            }
-            else
-            {
-                for (int j = 0; j < mcount[i]; j++)
-                    (lindex + pos)[j]++;
-
-                for (int j = 0; j < len; j++)
+                for (int j = 0; j < len; j++) {
                     displace[j] = ((lindex + pos)[j * blocksize] - 1);
+                }
             }
 
-            PLOG((2, "calling MPI_Type_create_indexed_block len = %d blocksize = %d "
-                  "mpitype = %d displace[0]=%d", len, blocksize, mpitype, displace[0]));
+            PLOG((2, "calling MPI_Type_create_indexed_block len = %d blocksize = %d mpitype = %d displace[0]=%d", len, blocksize, mpitype, displace[0]));
             /* Create an indexed datatype with constant-sized blocks. */
-            mpierr = MPI_Type_create_indexed_block(len, blocksize, displace,
-                                                   mpitype, &mtype[i]);
-
+            mpierr = MPI_Type_create_indexed_block(len, blocksize, displace, mpitype, &mtype[i]);
             free(displace);
-            if (mpierr)
-                return check_mpi(NULL, NULL, mpierr, __FILE__, __LINE__);
 
-            if (mtype[i] == PIO_DATATYPE_NULL)
+            if (mpierr) {
+                return check_mpi(NULL, NULL, mpierr, __FILE__, __LINE__);
+            }
+
+            if (mtype[i] == PIO_DATATYPE_NULL) {
                 return pio_err(NULL, NULL, PIO_EINVAL, __FILE__, __LINE__);
+            }
 
             /* Commit the MPI data type. */
             PLOG((3, "about to commit type"));
-            if ((mpierr = MPI_Type_commit(&mtype[i])))
+            mpierr = MPI_Type_commit(&mtype[i]);
+            if (mpierr) {
                 return check_mpi(NULL, NULL, mpierr, __FILE__, __LINE__);
+            }
             pos += mcount[i];
-
         }
     }
 
@@ -408,8 +394,9 @@ create_mpi_datatypes(MPI_Datatype mpitype, int msgcnt,
 
 exit:
     /* Free resources. */
-    if (lindex)
+    if (lindex) {
         free(lindex);
+    }
 
     return ret;
 }
