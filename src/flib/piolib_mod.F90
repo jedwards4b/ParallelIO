@@ -557,7 +557,7 @@ contains
     integer(PIO_Offset_kind), allocatable :: cstart(:), ccount(:)
     integer :: ierr
 
-    ndims = size(dims)
+    ndims = rank(dims)
 
     allocate(cstart(ndims), ccount(ndims), cdims(ndims))
 
